@@ -14,3 +14,6 @@ htmlcov/
 static_src/node_modules/
 static_src/.vitest/
 *-build.err
+
+# build/test stderr scratch
+*.err
