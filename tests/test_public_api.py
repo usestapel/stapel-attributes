@@ -51,6 +51,12 @@ class TestLazyExports:
             "validate_configs_structured",
             "validate_dao_structured",
             "validate_description",
+            # Config-form contract (schema-driven admin UI)
+            "FIELD_KINDS",
+            "FormField",
+            "form_declarations",
+            "ConfigEditorWidget",
+            "get_config_editor_widget",
             # Polymorphic serializer factories
             "get_feature_config_serializer_class",
             "get_feature_dto_serializer_class",

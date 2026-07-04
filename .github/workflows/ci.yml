@@ -6,6 +6,31 @@ on:
     branches: [main]
 
 jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: static_src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install (retry on npm flakiness)
+        run: npm ci || npm ci || npm install
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Test (vitest)
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Drift gate — built static/ must match the commit
+        run: |
+          if ! git diff --exit-code -- ../static/stapel_attributes; then
+            echo "::error::static/ is out of date — run 'npm run build' in static_src/ and commit the result"
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     strategy:

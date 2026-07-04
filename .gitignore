@@ -9,3 +9,8 @@ build/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# static_src frontend toolchain (built bundle in static/ IS committed)
+static_src/node_modules/
+static_src/.vitest/
+*-build.err

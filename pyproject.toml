@@ -44,7 +44,13 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-stapel_attributes = ["py.typed"]
+stapel_attributes = [
+    "py.typed",
+    # Committed admin bundle (built from static_src/ — consumers need no node).
+    "static/stapel_attributes/*.js",
+    "static/stapel_attributes/*.css",
+    "static/stapel_attributes/locales/*.json",
+]
 
 [tool.pytest.ini_options]
 django_find_project = false

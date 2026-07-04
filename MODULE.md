@@ -210,6 +210,59 @@ Error codes surface as `ValidationErrorCode` + `ref_value` + a localizable
 registry changes. Views in consuming modules should call the factory at
 request/schema time, never cache the class at import.
 
+## Admin UI — schema-driven config editor (Lit 3)
+
+Python is the source of truth for each type's admin form. A type declares its
+config form via `config_form()` → a list of `FormField(name, kind, label_key,
+required, default, params)`; `form_declarations()` is a JSON snapshot of every
+registered type (built-ins + `EXTRA_TYPES` + runtime). The committed Lit-3
+bundle (`static/stapel_attributes/attributes-admin.js`, built from `static_src/`)
+renders the form from that declaration — **a new type using only the standard
+field-kinds gets an admin form with zero JS.**
+
+**Field-kind dictionary** (`config_form.FIELD_KINDS`, minimally sufficient for the
+nine built-ins): `number`, `text`, `checkbox`, `translatable_text`,
+`number_options`, `string_options`, `color_options`, `select`,
+`select_options_with_default`, `max_selected_dropdown`, `hierarchical_options`,
+`timestamp`, `timestamp_array`. Validation stays Python-side (declarations +
+structured errors); the JS mirrors only UX validation.
+
+**Django widget**: `ConfigEditorWidget` (a `forms.Widget`) renders a
+progressive-enhancement `<textarea>` (works with no JS) + a mount point + the
+declarations/config/locale/messages via `json_script`; an inline ES-module
+imports the bundle and mounts `<stapel-config-editor>`. Value editors for the
+nine types (`bool`, `string`/`int`/`float`, `select`, `date`, `hex_color`,
+`hierarchical_select`, `header`) render a DTO from a config; unknown types fall
+back to `UnsupportedEditor`.
+
+### Admin seams (fork-free)
+
+| Customize | Seam |
+|---|---|
+| Config form of a new type | `config_form()` field-kind declaration (zero JS for standard kinds) |
+| Exotic UI for a kind/type | JS registries: `window.StapelAttributes.registerConfigWidget(kind, factory)` / `registerValueEditor(type, factory)` — MERGE over built-ins |
+| Look & feel | `--stapel-*` CSS vars (light + `[data-theme="dark"]`); `STAPEL_ATTRIBUTES["ADMIN_EXTRA_CSS"/"ADMIN_EXTRA_JS"]` |
+| Widget behaviour | subclass `ConfigEditorWidget`, or swap via `STAPEL_ATTRIBUTES["ADMIN_WIDGETS"]` (dotted-path merge) |
+| Admin locales | `STAPEL_ATTRIBUTES["ADMIN_LOCALES"]` — partial dict/static-path merged over built-in `en`/`ru` |
+
+Worked example — a host ships a `size_grid` JS widget for its app-layer type
+(paired with the `size_grid` feature type registered via `EXTRA_TYPES`):
+
+```js
+// fashion_vertical/static/.../size_grid_widget.js  (loaded via ADMIN_EXTRA_JS)
+import { html, LitElement } from "https://.../lit";  // or the host's bundler
+class SizeGridEditor extends LitElement { /* ...renders a table, emits a DTO... */ }
+customElements.define("size-grid-editor", SizeGridEditor);
+window.StapelAttributes.registerValueEditor(
+  "size_grid",
+  (opts) => Object.assign(new SizeGridEditor(), opts),
+);
+```
+
+The screens that *drive* these components (feature-editor, children-editor,
+convert-type) live in **stapel-categories**, not here (see
+docs/attributes-admin-ui.md §"Разделение собственности").
+
 ## Anti-patterns
 
 - **Don't fork to add a type** — the registry is the seam. If a new hook on

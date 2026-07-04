@@ -1,0 +1,68 @@
+/* stapel-attributes admin design tokens (docs decision 3).
+ * Components style ONLY via var(--stapel-*, fallback); a host overrides any
+ * token in its own CSS (no fork). Light is the default; dark is first-class via
+ * Django admin's [data-theme="dark"] and a prefers-color-scheme fallback. */
+
+:root {
+  --stapel-color-bg: #ffffff;
+  --stapel-color-surface: #f7f8fa;
+  --stapel-color-surface-alt: #eef0f4;
+  --stapel-color-text: #1f2430;
+  --stapel-color-text-muted: #6b7280;
+  --stapel-color-border: #d7dbe3;
+  --stapel-color-primary: #2a90d9;
+  --stapel-color-primary-contrast: #ffffff;
+  --stapel-color-error: #d64545;
+  --stapel-color-error-bg: #fdecec;
+  --stapel-color-focus: #2a90d9;
+  --stapel-color-overlay: rgba(20, 24, 33, 0.45);
+
+  --stapel-radius-sm: 4px;
+  --stapel-radius-md: 8px;
+  --stapel-radius-lg: 12px;
+  --stapel-space-1: 4px;
+  --stapel-space-2: 8px;
+  --stapel-space-3: 12px;
+  --stapel-space-4: 16px;
+  --stapel-space-5: 24px;
+  --stapel-elevation-1: 0 1px 2px rgba(20, 24, 33, 0.08), 0 1px 3px rgba(20, 24, 33, 0.06);
+  --stapel-elevation-2: 0 4px 12px rgba(20, 24, 33, 0.16);
+  --stapel-font: inherit;
+  --stapel-focus-ring: 0 0 0 2px var(--stapel-color-bg), 0 0 0 4px var(--stapel-color-focus);
+}
+
+/* Dark theme — explicit selector (Django admin 4.2+ toggle). */
+[data-theme="dark"] {
+  --stapel-color-bg: #1b1f27;
+  --stapel-color-surface: #232833;
+  --stapel-color-surface-alt: #2b313d;
+  --stapel-color-text: #e7eaf0;
+  --stapel-color-text-muted: #9aa3b2;
+  --stapel-color-border: #3a4250;
+  --stapel-color-primary: #4aa8e8;
+  --stapel-color-primary-contrast: #0d1117;
+  --stapel-color-error: #ef6b6b;
+  --stapel-color-error-bg: #3a2323;
+  --stapel-color-focus: #4aa8e8;
+  --stapel-color-overlay: rgba(0, 0, 0, 0.6);
+  --stapel-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --stapel-elevation-2: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+/* Fallback for hosts that don't set data-theme but the OS is dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --stapel-color-bg: #1b1f27;
+    --stapel-color-surface: #232833;
+    --stapel-color-surface-alt: #2b313d;
+    --stapel-color-text: #e7eaf0;
+    --stapel-color-text-muted: #9aa3b2;
+    --stapel-color-border: #3a4250;
+    --stapel-color-primary: #4aa8e8;
+    --stapel-color-primary-contrast: #0d1117;
+    --stapel-color-error: #ef6b6b;
+    --stapel-color-error-bg: #3a2323;
+    --stapel-color-focus: #4aa8e8;
+    --stapel-color-overlay: rgba(0, 0, 0, 0.6);
+  }
+}

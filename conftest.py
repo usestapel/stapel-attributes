@@ -18,6 +18,7 @@ def pytest_configure(config):
             },
             DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
             USE_TZ=True,
+            STATIC_URL="/static/",
         )
         import django
         django.setup()

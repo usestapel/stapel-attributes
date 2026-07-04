@@ -74,6 +74,27 @@ Batch validators return `ValidationBatchResult` rows with `error`,
 See [MODULE.md](MODULE.md) — the agent-facing map of every fork-free seam
 (settings, the type registry, serializer factories, translation-key hooks).
 
+## Admin UI
+
+A schema-driven config editor (Lit 3 web components) ships with the package.
+Each type declares its admin form in Python (`config_form()` → field-kinds); the
+committed bundle renders it, so a new type needs zero JS for standard kinds. Use
+`ConfigEditorWidget` on a config `JSONField`:
+
+```python
+from stapel_attributes import ConfigEditorWidget
+
+class FeatureForm(forms.ModelForm):
+    class Meta:
+        widgets = {"config": ConfigEditorWidget()}
+```
+
+Two themes (`--stapel-*`, light + dark), en/ru locales (merge without fork via
+`ADMIN_LOCALES`), and JS widget registries for exotic types. See MODULE.md
+"Admin UI" and docs/attributes-admin-ui.md. Frontend source is in `static_src/`
+(`npm test` / `npm run build`); the built bundle is committed — consumers need no
+Node.
+
 ## Development
 
 ```bash

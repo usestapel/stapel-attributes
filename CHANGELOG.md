@@ -4,6 +4,28 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [Unreleased]
+
+### Added — schema-driven admin UI (Lit 3)
+- **Field-kind contract** (`config_form.py`): `FIELD_KINDS` (13 kinds),
+  `FormField`, `config_form()` hook on `BaseFeatureType` (built-in declarations
+  for the nine types, ported 1:1 from legacy `feature_types.js`), and
+  `form_declarations()` — a JSON snapshot of all registered types.
+- **`static_src/`** — Lit 3 + TypeScript source (esbuild/vitest toolchain);
+  committed bundle `static/stapel_attributes/attributes-admin.js` (~15 KB gzip)
+  + `admin-tokens.css` (light + dark) + `locales/en.json`+`ru.json`.
+- **`<stapel-config-editor>`** (renders all 13 field-kinds) and value-editors for
+  the nine types, with two open merge registries
+  (`window.StapelAttributes.registerConfigWidget`/`registerValueEditor`) and an
+  `UnsupportedEditor` fallback. Mini-i18n (en+ru, merge without fork), `--stapel-*`
+  theming, CSRF + StapelError-envelope runtime, `<stapel-dialog>`, Test dialog.
+- **`ConfigEditorWidget`** (`widgets.py`) — Django admin widget with a
+  progressive-enhancement textarea + `json_script` mount; settings
+  `ADMIN_LOCALES`, `ADMIN_WIDGETS`, `ADMIN_EXTRA_CSS`, `ADMIN_EXTRA_JS`.
+- Extraction inventory `static_src/LOGIC-NOTES.md` (1:1 port source of truth).
+- CI: node job (vitest + typecheck) with a drift gate (rebuild must not change
+  `static/`).
+
 ## [0.1.0] - 2026-07-04
 
 Initial release: port of the typed-attribute engine from

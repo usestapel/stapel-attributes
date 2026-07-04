@@ -57,6 +57,12 @@ __all__ = [
     "validate_configs_structured",
     "validate_dao_structured",
     "validate_description",
+    # Config-form contract (schema-driven admin UI)
+    "FIELD_KINDS",
+    "FormField",
+    "form_declarations",
+    "ConfigEditorWidget",
+    "get_config_editor_widget",
     # Polymorphic serializer factories
     "get_feature_config_serializer_class",
     "get_feature_dto_serializer_class",
@@ -109,6 +115,13 @@ _LAZY_EXPORTS = {
     "validate_configs_structured": ".validation",
     "validate_dao_structured": ".validation",
     "validate_description": ".validation",
+    # config-form contract
+    "FIELD_KINDS": ".config_form",
+    "FormField": ".config_form",
+    "form_declarations": ".config_form",
+    # admin widget (Django-importing; lazy so package import stays Django-free)
+    "ConfigEditorWidget": ".widgets",
+    "get_config_editor_widget": ".widgets",
     # serializer factories
     "get_feature_config_serializer_class": ".serializers",
     "get_feature_dto_serializer_class": ".serializers",

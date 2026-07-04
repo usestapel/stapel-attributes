@@ -269,6 +269,22 @@ class BaseFeatureType(ABC, Generic[TConfig, TDto, TDao]):
         """Return the default configuration dict for this type."""
         return {'type': self.slug}
 
+    def config_form(self) -> List[Any]:
+        """Declare this type's admin config form as a list of ``FormField``.
+
+        Python is the source of truth for the config-form schema
+        (docs/attributes-admin-ui.md decision 1): the admin JS renders the form
+        from this declaration, so a type using only the standard field-kinds
+        needs zero JS. The nine built-ins resolve their ported declaration by
+        slug from ``config_form.BUILTIN_FORMS``; host-registered types override
+        this to declare their own fields (or return ``[]`` and ship a custom JS
+        config widget). Kinds must be keys of ``config_form.FIELD_KINDS``.
+        """
+        from stapel_attributes.config_form import BUILTIN_FORMS
+
+        builder = BUILTIN_FORMS.get(self.slug)
+        return builder() if builder else []
+
     def get_default_value(self, config: TConfig) -> Optional[Any]:
         """
         Return the default value for this feature type.
