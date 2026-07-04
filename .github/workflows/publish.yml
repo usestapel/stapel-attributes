@@ -12,9 +12,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build
+        # PYTHONSAFEPATH keeps the repo root off sys.path so the local `types/`
+        # subpackage can't shadow the stdlib `types` module during build startup.
         run: |
           pip install build --quiet
-          python -m build
+          PYTHONSAFEPATH=1 python -m build
       - uses: actions/upload-artifact@v4
         with:
           name: dist
