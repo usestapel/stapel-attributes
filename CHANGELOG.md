@@ -4,7 +4,7 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
-## [Unreleased]
+## [0.1.2] - 2026-07-05
 
 ### Added — schema-driven admin UI (Lit 3)
 - **Field-kind contract** (`config_form.py`): `FIELD_KINDS` (13 kinds),
