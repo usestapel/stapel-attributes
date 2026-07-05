@@ -27,9 +27,13 @@ from stapel_attributes.config_form import form_declarations
 from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.validation import validate_dto_structured
 
+from stapel_attributes.errors import ERROR_CODE_TO_KEY
+from stapel_attributes.results import ValidationErrorCode
+
 GOLDEN_DIR = Path(__file__).parent / "golden"
 CASES_DIR = GOLDEN_DIR / "cases"
 DECLARATIONS = GOLDEN_DIR / "declarations.json"
+ERROR_CODES = GOLDEN_DIR / "error_codes.json"
 RECORD = os.environ.get("GOLDEN_RECORD") == "1"
 
 
@@ -89,6 +93,34 @@ def test_declaration_defaults_equal_engine_normalized_defaults():
     # maxSelected: no declared default (None = unlimited) and absent from normalized.
     assert "default" not in select["maxSelected"]
     assert "maxSelected" not in normalized
+
+
+# --------------------------------------------------------------------------- #
+# ValidationErrorCode contract — the py↔ts bridge for machine error codes.
+# error_codes.json is generated from the Python enum and asserted by BOTH this
+# runner and static_src/src/error-codes.test.ts (the TS mirror), so a code added
+# on one side without the other turns a test red.
+# --------------------------------------------------------------------------- #
+
+def test_error_codes_snapshot_has_no_drift():
+    live = sorted(e.value for e in ValidationErrorCode)
+    if RECORD:
+        ERROR_CODES.write_text(json.dumps(live, indent=2, ensure_ascii=False) + "\n")
+        pytest.skip("recorded error_codes.json")
+    committed = json.loads(ERROR_CODES.read_text())
+    assert committed == live, (
+        "tests/golden/error_codes.json is stale — regenerate with GOLDEN_RECORD=1 "
+        "and sync static_src/src/error-codes.ts."
+    )
+
+
+def test_every_error_code_maps_to_a_localizable_key():
+    # Contract: every machine code resolves to an error.400.* key (incl. the new
+    # NOT_ALLOWED / UNKNOWN_FEATURE follow-up codes).
+    for code in ValidationErrorCode:
+        assert code in ERROR_CODE_TO_KEY, f"{code.name} has no localizable key"
+    assert ERROR_CODE_TO_KEY[ValidationErrorCode.NOT_ALLOWED] == "error.400.feature_not_allowed"
+    assert ERROR_CODE_TO_KEY[ValidationErrorCode.UNKNOWN_FEATURE] == "error.400.feature_unknown"
 
 
 # --------------------------------------------------------------------------- #

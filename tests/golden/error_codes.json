@@ -1,0 +1,17 @@
+[
+  "above_maximum",
+  "below_minimum",
+  "description_too_long",
+  "description_too_short",
+  "duplicate_slug",
+  "empty_options",
+  "invalid_config",
+  "invalid_format",
+  "invalid_type",
+  "mandatory_missing",
+  "min_greater_than_max",
+  "not_allowed",
+  "not_in_options",
+  "unknown_feature",
+  "unknown_feature_type"
+]

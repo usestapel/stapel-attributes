@@ -31,6 +31,10 @@ export class StapelErrorView extends LitElement {
   }
 }
 
+// @stapel-auto-define:start — django self-registers here; the lib build strips
+// this block (strip-auto-define.mjs) so lib imports are side-effect-free.
 if (typeof customElements !== "undefined" && !customElements.get("stapel-error")) {
   customElements.define("stapel-error", StapelErrorView);
 }
+// @stapel-auto-define:end
+

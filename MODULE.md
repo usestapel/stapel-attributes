@@ -270,6 +270,27 @@ The screens that *drive* these components (feature-editor, children-editor,
 convert-type) live in **stapel-categories**, not here (see
 docs/attributes-admin-ui.md §"Разделение собственности").
 
+### Dual build — django bundle + npm lib (`static_src/build.mjs`)
+
+One source tree, two outputs:
+
+| Build | `node build.mjs …` | Output | Lit | Registration |
+|---|---|---|---|---|
+| **django** | (default) | committed `static/stapel_attributes/` (drift-gated, **byte-stable**) | inlined | side-effect imports (`index.ts`) self-register |
+| **lib** | `lib` | `dist/` (gitignored) `@stapel/attributes-admin` ESM + `.d.ts` | **peerDependency** (`^3`, external) | none on import — host calls `defineElements()` |
+
+The editor/component modules keep their self-registration tail fenced by
+`// @stapel-auto-define:start … :end`. The django build keeps it; the **lib**
+build strips it (`strip-auto-define.mjs`) so the package is honestly
+`sideEffects: false` and importing `lib.ts` registers nothing. Consumers
+(`@stapel/attributes-react`) import `defineElements`, `mountConfigEditor`,
+`createValueEditor`, the element classes, and the `ValidationErrorCode` mirror.
+The django build sets esbuild `ignoreAnnotations: true` so the lib's
+`sideEffects:false` can't prune the admin bundle's registrations. Publishing is
+opt-in (not done here). Both builds are covered by vitest (`builds-lib.test.ts`
+side-effect-free import + `defineElements`; `builds-django.test.ts` self-register
++ `window.StapelAttributes`).
+
 ### Cross-language golden bridge (`tests/golden/`)
 
 The config a JS widget emits is validated by the Python engine; `tests/golden/`
@@ -278,7 +299,11 @@ pins that round-trip. One JSON corpus is run by **both** `tests/test_golden.py`
 assertion — the two engines must agree unless a case records an explicit
 `divergence`. Regenerate expectations with `GOLDEN_RECORD=1` (byte-stable) and
 keep `tests/golden/declarations.json` (the committed `form_declarations()`
-snapshot, drift-gated) in sync when a declaration changes.
+snapshot, drift-gated) in sync when a declaration changes. The same bridge pins
+the **error-code contract**: `tests/golden/error_codes.json` (generated from the
+`ValidationErrorCode` enum) is asserted by both the Python runner and the TS
+mirror `static_src/src/error-codes.ts` — a code added on one side but not the
+other turns a test red.
 
 **Pattern contract**: a string `pattern` matches the **whole** value
 (`re.fullmatch` / `^(?:…)$`) and is a JS-RegExp-compatible subset. String

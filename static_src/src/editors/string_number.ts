@@ -169,9 +169,13 @@ export class StringNumberValueEditor extends ValueEditorElement {
   }
 }
 
+// @stapel-auto-define:start — django self-registers here; the lib build strips
+// this block (strip-auto-define.mjs) so lib imports are side-effect-free.
 if (typeof customElements !== "undefined" && !customElements.get("stapel-ve-string-number")) {
   customElements.define("stapel-ve-string-number", StringNumberValueEditor);
 }
 for (const t of ["string", "int", "float"]) {
   registerValueEditor(t, valueEditorFactory(StringNumberValueEditor));
 }
+// @stapel-auto-define:end
+

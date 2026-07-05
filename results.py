@@ -39,6 +39,13 @@ class ValidationErrorCode(str, Enum):
     MANDATORY_MISSING = 'mandatory_missing'
     DUPLICATE_SLUG = 'duplicate_slug'
     UNKNOWN_FEATURE_TYPE = 'unknown_feature_type'
+    # A referenced feature slug is not permitted for its owner (e.g. a listing
+    # submits a feature its category does not allow). Canonical replacement for
+    # the temporary listing-local key; reused by listings/categories.
+    NOT_ALLOWED = 'not_allowed'
+    # A referenced feature slug is unknown / undefined — distinct from
+    # UNKNOWN_FEATURE_TYPE, which is an unregistered config ``type``.
+    UNKNOWN_FEATURE = 'unknown_feature'
 
     # Description constraints
     DESCRIPTION_TOO_SHORT = 'description_too_short'

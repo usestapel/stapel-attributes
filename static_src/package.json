@@ -1,23 +1,50 @@
 {
   "name": "@stapel/attributes-admin",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Schema-driven admin UI (Lit 3 web components) for stapel-attributes. Source; the built ESM bundle is committed under ../static/stapel_attributes/.",
+  "version": "0.3.0",
+  "description": "Schema-driven admin UI (Lit 3 web components) for stapel-attributes. Dual build from one source: the committed Django admin bundle (inlined Lit) under ../static/, and an externalized-Lit ESM package (Lit peerDependency) for npm consumers such as @stapel/attributes-react.",
   "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./dist/lib.mjs",
+  "module": "./dist/lib.mjs",
+  "types": "./dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.mjs"
+    },
+    "./admin-tokens.css": "./dist/admin-tokens.css",
+    "./locales/*": "./dist/locales/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "strip-auto-define.mjs",
+    "build.mjs",
+    "tsconfig.json",
+    "tsconfig.lib.json"
+  ],
   "scripts": {
     "build": "node build.mjs",
+    "build:lib": "node build.mjs lib",
+    "build:all": "node build.mjs all",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "lit": "^3.2.0"
+  "peerDependencies": {
+    "lit": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
     "esbuild": "^0.24.0",
     "jsdom": "^25.0.0",
+    "lit": "^3.2.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

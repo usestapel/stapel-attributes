@@ -17,6 +17,8 @@ ERR_400_FEATURE_INVALID_TYPE = "error.400.feature_invalid_type"
 ERR_400_FEATURE_INVALID_FORMAT = "error.400.feature_invalid_format"
 ERR_400_FEATURE_MANDATORY_MISSING = "error.400.feature_mandatory_missing"
 ERR_400_FEATURE_UNKNOWN_TYPE = "error.400.feature_unknown_type"
+ERR_400_FEATURE_NOT_ALLOWED = "error.400.feature_not_allowed"
+ERR_400_FEATURE_UNKNOWN = "error.400.feature_unknown"
 ERR_400_FEATURE_INVALID_CONFIG = "error.400.feature_invalid_config"
 
 ERR_400_DESCRIPTION_TOO_SHORT = "error.400.description_too_short"
@@ -30,6 +32,8 @@ ATTRIBUTES_ERRORS = {
     ERR_400_FEATURE_INVALID_FORMAT: "Invalid format for {feature}",
     ERR_400_FEATURE_MANDATORY_MISSING: "Mandatory feature {feature} is required",
     ERR_400_FEATURE_UNKNOWN_TYPE: "Unknown feature type for {feature}",
+    ERR_400_FEATURE_NOT_ALLOWED: "Feature {feature} is not allowed here",
+    ERR_400_FEATURE_UNKNOWN: "Unknown feature {feature}",
     ERR_400_FEATURE_INVALID_CONFIG: "Invalid config for {feature}",
     ERR_400_DESCRIPTION_TOO_SHORT: "Description must be at least {min_length} characters",
     ERR_400_DESCRIPTION_TOO_LONG: "Description must be at most {max_length} characters",
@@ -47,6 +51,8 @@ ERROR_CODE_TO_KEY = {
     ValidationErrorCode.MANDATORY_MISSING: ERR_400_FEATURE_MANDATORY_MISSING,
     ValidationErrorCode.DUPLICATE_SLUG: ERR_400_FEATURE_UNKNOWN_TYPE,
     ValidationErrorCode.UNKNOWN_FEATURE_TYPE: ERR_400_FEATURE_UNKNOWN_TYPE,
+    ValidationErrorCode.NOT_ALLOWED: ERR_400_FEATURE_NOT_ALLOWED,
+    ValidationErrorCode.UNKNOWN_FEATURE: ERR_400_FEATURE_UNKNOWN,
     ValidationErrorCode.INVALID_CONFIG: ERR_400_FEATURE_INVALID_CONFIG,
     ValidationErrorCode.MIN_GREATER_THAN_MAX: ERR_400_FEATURE_INVALID_CONFIG,
     ValidationErrorCode.EMPTY_OPTIONS: ERR_400_FEATURE_INVALID_CONFIG,
@@ -64,6 +70,8 @@ __all__ = [
     "ERR_400_FEATURE_INVALID_FORMAT",
     "ERR_400_FEATURE_MANDATORY_MISSING",
     "ERR_400_FEATURE_UNKNOWN_TYPE",
+    "ERR_400_FEATURE_NOT_ALLOWED",
+    "ERR_400_FEATURE_UNKNOWN",
     "ERR_400_FEATURE_INVALID_CONFIG",
     "ERR_400_DESCRIPTION_TOO_SHORT",
     "ERR_400_DESCRIPTION_TOO_LONG",

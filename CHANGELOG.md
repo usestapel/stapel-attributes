@@ -4,6 +4,49 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.3.0] - 2026-07-06
+
+Dual-build packaging for the admin UI + a contract-level error-code addition.
+Minor bump: additive `ValidationErrorCode` members (new machine codes).
+
+### Added — npm packaging (`@stapel/attributes-admin`)
+- **Dual build from one source** (`static_src/build.mjs`):
+  1. **django** — the committed admin bundle under `static/stapel_attributes/`
+     (Lit inlined). Unchanged and **byte-stable**: same hash, drift gate green.
+  2. **lib** — an externalized-Lit ESM package for npm consumers
+     (`@stapel/attributes-react`). Lit is a **peerDependency** (`^3`), types
+     (`.d.ts`) are emitted, `sideEffects: false`. Output to `dist/` (gitignored,
+     not published here — publishing is the user's decision).
+- **Side-effect split without forking sources.** Each editor/component module
+  keeps its self-registration tail (django bundle relies on it), fenced by
+  `// @stapel-auto-define:start … :end`. The lib build strips those fences
+  (`strip-auto-define.mjs`), so importing the lib registers **nothing** until the
+  host calls the new `defineElements()`. Preserves byte-stability of the django
+  bundle (no source refactor perturbs esbuild's minifier) while giving the lib an
+  honest `sideEffects: false`.
+- New pure entry `src/lib.ts`: `defineElements()`, `mountConfigEditor`,
+  `createValueEditor`, the element/registry/i18n exports, and the error-code
+  mirror — no `window` global, no implicit `customElements.define`.
+- The django build passes `ignoreAnnotations: true` so `sideEffects: false` (for
+  the npm lib) cannot tree-shake the admin bundle's registrations.
+- vitest covers **both builds**: the lib artifact is side-effect-free on import
+  and `defineElements()` registers the full set; the django entry self-registers
+  and installs `window.StapelAttributes`.
+
+### Added — validation vocabulary (follow-up: fix-catalog-feature-editor)
+- `ValidationErrorCode.NOT_ALLOWED` (`not_allowed`) — a referenced feature slug
+  is not permitted for its owner (e.g. a listing submits a feature its category
+  disallows). Canonical replacement for the temporary
+  `error.400.listing_feature_not_allowed` key in stapel-listings; reused by
+  listings/categories. Localizable key: `error.400.feature_not_allowed`.
+- `ValidationErrorCode.UNKNOWN_FEATURE` (`unknown_feature`) — a referenced slug
+  is unknown/undefined (distinct from `UNKNOWN_FEATURE_TYPE`, an unregistered
+  config `type`). Localizable key: `error.400.feature_unknown`.
+- TS mirror `static_src/src/error-codes.ts` (`ValidationErrorCode`,
+  `VALIDATION_ERROR_CODES`) exported from the lib. A golden snapshot
+  (`tests/golden/error_codes.json`, generated from the Python enum) is asserted
+  by **both** the Python runner and the TS mirror test — the py↔ts sync gate.
+
 ## [0.2.0] - 2026-07-05
 
 Code-review fixes for the schema-driven admin UI (config-form declaration ↔ JS

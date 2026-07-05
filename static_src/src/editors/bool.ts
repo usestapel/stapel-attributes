@@ -55,7 +55,11 @@ export class BoolValueEditor extends ValueEditorElement {
   }
 }
 
+// @stapel-auto-define:start — django self-registers here; the lib build strips
+// this block (strip-auto-define.mjs) so lib imports are side-effect-free.
 if (typeof customElements !== "undefined" && !customElements.get("stapel-ve-bool")) {
   customElements.define("stapel-ve-bool", BoolValueEditor);
 }
 registerValueEditor("bool", valueEditorFactory(BoolValueEditor));
+// @stapel-auto-define:end
+

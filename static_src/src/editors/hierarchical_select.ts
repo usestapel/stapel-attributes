@@ -141,7 +141,11 @@ export class HierarchicalSelectValueEditor extends ValueEditorElement {
   }
 }
 
+// @stapel-auto-define:start — django self-registers here; the lib build strips
+// this block (strip-auto-define.mjs) so lib imports are side-effect-free.
 if (typeof customElements !== "undefined" && !customElements.get("stapel-ve-hierarchical")) {
   customElements.define("stapel-ve-hierarchical", HierarchicalSelectValueEditor);
 }
 registerValueEditor("hierarchical_select", valueEditorFactory(HierarchicalSelectValueEditor));
+// @stapel-auto-define:end
+

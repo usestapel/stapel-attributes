@@ -5,6 +5,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     include: ["src/**/*.test.ts"],
+    // Builds the lib bundle (Node env) so builds-lib.test.ts can load the artifact.
+    globalSetup: ["./vitest.globalSetup.mjs"],
   },
   esbuild: {
     // Lit decorators

@@ -43,9 +43,13 @@ export class StapelDialog extends LitElement {
   }
 }
 
+// @stapel-auto-define:start — django self-registers here; the lib build strips
+// this block (strip-auto-define.mjs) so lib imports are side-effect-free.
 if (typeof customElements !== "undefined" && !customElements.get("stapel-dialog")) {
   customElements.define("stapel-dialog", StapelDialog);
 }
+// @stapel-auto-define:end
+
 
 /** Open `content` in a modal; returns a close fn (LN-R03). */
 export function openDialog(content: Node): () => void {
