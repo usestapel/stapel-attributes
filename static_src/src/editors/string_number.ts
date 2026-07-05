@@ -84,9 +84,14 @@ export class StringNumberValueEditor extends ValueEditorElement {
       if (this.config.max != null && n > (this.config.max as number)) errs.push(`Maximum value is ${this.config.max}`);
     } else {
       const s = val as string;
-      if (this.config.minLength != null && s.length < (this.config.minLength as number)) errs.push(`Minimum length is ${this.config.minLength}`);
-      if (this.config.maxLength != null && s.length > (this.config.maxLength as number)) errs.push(`Maximum length is ${this.config.maxLength}`);
-      if (this.config.pattern && !new RegExp(this.config.pattern as string).test(s)) errs.push("Invalid format");
+      // B5(a): count Unicode code points, not UTF-16 units, to match Python
+      // len() (e.g. "😀😀" is length 2 on both sides).
+      const len = [...s].length;
+      if (this.config.minLength != null && len < (this.config.minLength as number)) errs.push(`Minimum length is ${this.config.minLength}`);
+      if (this.config.maxLength != null && len > (this.config.maxLength as number)) errs.push(`Maximum length is ${this.config.maxLength}`);
+      // B5(b): whole-value match (anchored both ends) to mirror Python
+      // re.fullmatch — not the unanchored RegExp.test search.
+      if (this.config.pattern && !new RegExp(`^(?:${this.config.pattern as string})$`).test(s)) errs.push("Invalid format");
     }
     return errs;
   }

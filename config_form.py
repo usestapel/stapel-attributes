@@ -144,10 +144,19 @@ def _hex_color_form() -> List[FormField]:  # LN-T-hex_color (allowCustom default
 
 
 def _select_form() -> List[FormField]:  # LN-T-select
+    # B2 canon: the untouched-form defaults MUST equal the engine dataclass
+    # defaults (SelectConfig: uiStyle='dropdown', maxSelected=None=unlimited),
+    # so a select saved without touching these fields round-trips to what the
+    # UI displayed. Chosen over legacy's chips/1 because it keeps the engine's
+    # established default — no stored config that omits these keys is
+    # reinterpreted, and no already-stored multi-select DAO is retroactively
+    # invalidated by a maxSelected=1 cap. ``maxSelected`` carries no default
+    # (None omitted from to_dict): the max_selected_dropdown widget then shows
+    # "Unlimited", matching the engine.
     return [
         _f("select", "options", "select_options_with_default"),
         _f(
-            "select", "uiStyle", "select", required=True, default="chips",
+            "select", "uiStyle", "select", required=True, default="dropdown",
             params={"options": [
                 {"value": "chips", "label": "Chips/Tags"},
                 {"value": "checkboxes", "label": "Checkboxes (like checklist)"},
@@ -155,7 +164,7 @@ def _select_form() -> List[FormField]:  # LN-T-select
             ]},
         ),
         _f("select", "minSelected", "number", default=0, params={"step": 1}),
-        _f("select", "maxSelected", "max_selected_dropdown", default=1),
+        _f("select", "maxSelected", "max_selected_dropdown"),
         _f("select", "lockUserInput", "checkbox"),
     ]
 
@@ -189,6 +198,12 @@ def _date_form() -> List[FormField]:  # LN-T-date (field literally named 'defaul
 
 
 def _header_form() -> List[FormField]:  # LN-T-header (style default 'h2' matches no option — LN-B01)
+    # B7 (LN-D07): the legacy ``label`` field is dropped. HeaderConfig has no
+    # ``label`` — parse_config silently discarded it and the header value-editor
+    # reads config.title ?? config.name (never label). The header text is
+    # authored through the feature definition's name (docs §4 / header/type.py
+    # dto_to_dao uses feature.name), so a required-but-ignored config field was
+    # a port artifact; removed rather than wiring a redundant second source.
     return [
         _f(
             "header", "style", "select", required=True, default="h2",
@@ -197,7 +212,6 @@ def _header_form() -> List[FormField]:  # LN-T-header (style default 'h2' matche
                 {"value": "m", "label": "H2 - Medium"},
             ]},
         ),
-        _f("header", "label", "text", required=True, params={"placeholder": "section.general"}),
     ]
 
 

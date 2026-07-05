@@ -1,0 +1,48 @@
+{
+  "config": {
+    "options": [
+      {
+        "label": "Red",
+        "value": "red"
+      }
+    ],
+    "type": "select"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "lockUserInput": false,
+        "options": [
+          {
+            "label": "Red",
+            "value": "red"
+          }
+        ],
+        "type": "select"
+      }
+    },
+    "python": {
+      "error_code": null,
+      "normalized": {
+        "lockUserInput": false,
+        "minSelected": 0,
+        "options": [
+          {
+            "default": false,
+            "label": "Red",
+            "value": "red"
+          }
+        ],
+        "translatable_options": true,
+        "type": "select",
+        "uiStyle": "dropdown"
+      },
+      "valid": true
+    }
+  },
+  "id": "select-untouched-defaults",
+  "kind": "config",
+  "note": "B2: JS emits only options for an untouched select; engine fills dropdown/unlimited",
+  "type": "select"
+}

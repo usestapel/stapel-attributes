@@ -1,0 +1,25 @@
+{
+  "config": {
+    "minLength": 3,
+    "type": "string"
+  },
+  "divergence": null,
+  "dto": {
+    "type": "string",
+    "value": "😀😀"
+  },
+  "expect": {
+    "js": {
+      "valid": false
+    },
+    "python": {
+      "error_code": "BELOW_MINIMUM",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "string-emoji-minlength",
+  "kind": "dto",
+  "note": "B5a: '😀😀' is 2 code points; minLength 3 rejects on both sides",
+  "type": "string"
+}

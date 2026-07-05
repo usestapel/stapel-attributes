@@ -1,0 +1,28 @@
+{
+  "config": {
+    "type": "int"
+  },
+  "divergence": {
+    "known": "B4",
+    "reason": "mandatory empty value is rejected server-side only; JS is not the source of truth (docs §4) — the value-editor holds a wrapped null and does not flag it"
+  },
+  "dto": {
+    "type": "int",
+    "value": null
+  },
+  "expect": {
+    "js": {
+      "valid": true
+    },
+    "python": {
+      "error_code": "MANDATORY_MISSING",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "mandatory-int-null",
+  "kind": "dto",
+  "mandatory": true,
+  "note": "B4: mandatory int with value null is MANDATORY_MISSING",
+  "type": "int"
+}

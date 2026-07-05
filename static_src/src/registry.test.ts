@@ -5,7 +5,10 @@ import {
   registerConfigWidget,
   resolveConfigWidget,
   registeredValueEditorTypes,
+  registeredConfigWidgetKinds,
   installGlobal,
+  BUILTIN_CONFIG_WIDGET,
+  BUILTIN_CONFIG_WIDGET_KINDS,
 } from "./registry.js";
 import { I18n } from "./runtime/i18n.js";
 
@@ -34,6 +37,20 @@ describe("registries (docs §4 seam)", () => {
     registerConfigWidget("exotic", w);
     expect(resolveConfigWidget("exotic")).toBe(w);
     expect(resolveConfigWidget("unknown_kind")).toBeUndefined();
+  });
+
+  it("B1: built-in kinds are seeded at import (registeredConfigWidgetKinds not empty)", () => {
+    const kinds = registeredConfigWidgetKinds();
+    for (const k of BUILTIN_CONFIG_WIDGET_KINDS) expect(kinds).toContain(k);
+    // a seeded built-in resolves to the render-natively sentinel...
+    expect(resolveConfigWidget("number")).toBe(BUILTIN_CONFIG_WIDGET);
+  });
+
+  it("B1: a host override of a built-in kind wins over the sentinel", () => {
+    const custom = () => document.createElement("div");
+    registerConfigWidget("checkbox", custom); // override a built-in
+    expect(resolveConfigWidget("checkbox")).toBe(custom);
+    registerConfigWidget("checkbox", BUILTIN_CONFIG_WIDGET); // restore for other tests
   });
 
   it("installGlobal exposes window.StapelAttributes", () => {

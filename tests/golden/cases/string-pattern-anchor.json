@@ -1,0 +1,25 @@
+{
+  "config": {
+    "pattern": "[A-Z]+",
+    "type": "string"
+  },
+  "divergence": null,
+  "dto": {
+    "type": "string",
+    "value": "ABCdef"
+  },
+  "expect": {
+    "js": {
+      "valid": false
+    },
+    "python": {
+      "error_code": "INVALID_FORMAT",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "string-pattern-anchor",
+  "kind": "dto",
+  "note": "B5b: fullmatch — a prefix-only match is rejected on both sides",
+  "type": "string"
+}

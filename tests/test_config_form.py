@@ -168,10 +168,13 @@ def test_bool_two_translatable_labels():  # LN-T-bool
 def test_select_declaration():  # LN-T-select
     f = _by_name("select")
     assert f["options"].kind == "select_options_with_default"
-    assert f["uiStyle"].kind == "select" and f["uiStyle"].required and f["uiStyle"].default == "chips"
+    # B2: untouched defaults == engine SelectConfig defaults (dropdown/unlimited)
+    assert f["uiStyle"].kind == "select" and f["uiStyle"].required and f["uiStyle"].default == "dropdown"
     assert [o["value"] for o in f["uiStyle"].params["options"]] == ["chips", "checkboxes", "dropdown"]
     assert f["minSelected"].default == 0
-    assert f["maxSelected"].kind == "max_selected_dropdown" and f["maxSelected"].default == 1
+    # maxSelected carries no default (None = unlimited, matching the engine);
+    # the widget shows "Unlimited" when untouched.
+    assert f["maxSelected"].kind == "max_selected_dropdown" and f["maxSelected"].default is None
     assert "lockUserInput" in f  # LN-B16 naming
 
 
@@ -197,4 +200,10 @@ def test_header_style_default_h2_matches_no_option():  # LN-B01 (latent bug pres
     option_values = {o["value"] for o in f["style"].params["options"]}
     assert option_values == {"l", "m"}
     assert f["style"].default not in option_values  # the preserved mismatch
-    assert f["label"].kind == "text" and f["label"].required
+
+
+def test_header_has_no_label_field():  # B7 (LN-D07): dead `label` removed
+    # HeaderConfig has no `label`; header text is authored via feature.name.
+    f = _by_name("header")
+    assert "label" not in f
+    assert [x.name for x in _fields("header")] == ["style"]

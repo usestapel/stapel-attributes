@@ -1,0 +1,27 @@
+{
+  "config": {
+    "style": "l",
+    "type": "header"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "style": "l",
+        "type": "header"
+      }
+    },
+    "python": {
+      "error_code": null,
+      "normalized": {
+        "style": "l",
+        "type": "header"
+      },
+      "valid": true
+    }
+  },
+  "id": "header-no-label",
+  "kind": "config",
+  "note": "B7: header config has no label field; text comes from feature.name",
+  "type": "header"
+}

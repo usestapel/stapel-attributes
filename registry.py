@@ -48,6 +48,11 @@ _version: int = 0
 _builtins_loaded = False
 _loaded_extra_paths: set = set()
 
+# Re-entrancy guard: set while ``_ensure_loaded`` is importing built-ins/extras
+# so the ``@register_feature_type`` decorators fired *during* that import do not
+# recursively re-enter loading (which would reorder built-ins after extras).
+_loading = False
+
 
 def register_feature_type(cls: Type[BaseFeatureType]) -> Type[BaseFeatureType]:
     """
@@ -60,8 +65,17 @@ def register_feature_type(cls: Type[BaseFeatureType]) -> Type[BaseFeatureType]:
             ...
 
     Re-registering a slug overrides the previous registration (later wins).
+
+    A runtime registration first ensures the built-ins and ``EXTRA_TYPES`` are
+    loaded, then applies on top of them — so a host override of a built-in slug
+    (e.g. from ``AppConfig.ready()`` before the registry is first touched) is
+    never clobbered by the lazy built-in load (later wins, per the house
+    contract). The ``_loading`` guard keeps the decorators fired during that
+    load from re-entering.
     """
     global _version
+    if not _loading:
+        _ensure_loaded()
     instance = cls()
     _FEATURE_TYPES[instance.slug] = instance
     _version += 1
@@ -123,8 +137,15 @@ def _load_extra_types() -> None:
 
 
 def _ensure_loaded() -> None:
-    _load_builtin_types()
-    _load_extra_types()
+    global _loading
+    if _loading:
+        return
+    _loading = True
+    try:
+        _load_builtin_types()
+        _load_extra_types()
+    finally:
+        _loading = False
 
 
 def registry_version() -> int:
@@ -180,6 +201,31 @@ def get_all_type_slugs() -> List[str]:
 # =============================================================================
 
 
+def _flatten_serializer_errors(errors: Any, prefix: str = '') -> Dict[str, str]:
+    """Flatten a nested DRF serializer ``.errors`` tree into
+    ``{dotted.field.path: message}`` with plain ``str`` messages.
+
+    Keeps the structured shape (so it JSON-serializes and localizes per field)
+    without exposing ``ErrorDetail`` reprs or list nesting to the caller.
+    """
+    out: Dict[str, str] = {}
+    if isinstance(errors, dict):
+        for key, val in errors.items():
+            path = f"{prefix}{key}" if not prefix else f"{prefix}.{key}"
+            out.update(_flatten_serializer_errors(val, path))
+    elif isinstance(errors, (list, tuple)):
+        # A list of per-item dicts (nested serializers) or of message strings.
+        if errors and all(isinstance(e, (dict, list, tuple)) for e in errors):
+            for idx, item in enumerate(errors):
+                path = f"{prefix}.{idx}" if prefix else str(idx)
+                out.update(_flatten_serializer_errors(item, path))
+        else:
+            out[prefix or '_'] = '; '.join(str(e) for e in errors)
+    else:
+        out[prefix or '_'] = str(errors)
+    return out
+
+
 def parse_config(config_dict: Dict[str, Any]) -> Any:
     """
     Parse config dict into typed dataclass instance.
@@ -225,9 +271,16 @@ def parse_config(config_dict: Dict[str, Any]) -> Any:
     serializer = serializer_class(data=config_dict)
 
     if not serializer.is_valid():
+        # B6: don't leak the raw DRF ``ErrorDetail`` repr into the message.
+        # Flatten the serializer errors into plain per-field strings and carry
+        # them as structured ``params`` so a consumer can localize per field,
+        # while the message stays a short, stable human summary.
+        field_errors = _flatten_serializer_errors(serializer.errors)
+        summary = ', '.join(sorted(field_errors)) if field_errors else 'invalid'
         raise FeatureValidationError(
-            f"Invalid config for type '{type_slug}': {serializer.errors}",
+            f"Invalid config for type '{type_slug}' ({summary})",
             code=ValidationErrorCode.INVALID_CONFIG,
+            params={'type': type_slug, 'config_errors': field_errors},
         )
 
     # The serializer returns dict (DictDataclassSerializer), convert to dataclass

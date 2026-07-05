@@ -80,7 +80,13 @@ class StringFeatureType(BaseFeatureType[StringConfig, StringDto, StringDao]):
             )
 
         if config.pattern:
-            if not re.match(config.pattern, value):
+            # B5(b) pattern contract: the pattern must match the ENTIRE value
+            # (``re.fullmatch``, both ends anchored), not just a prefix
+            # (``re.match``). The admin JS mirrors this with ``^(?:<pattern>)$``.
+            # ``pattern`` is a JS-RegExp-compatible subset; engine-specific
+            # regex features (lookbehind, ``\p{…}`` flags, …) are out of the
+            # cross-language contract. See docs/attributes-admin-ui.md.
+            if not re.fullmatch(config.pattern, value):
                 raise FeatureValidationError(
                     f"Value does not match pattern: {config.pattern}",
                     code=ValidationErrorCode.INVALID_FORMAT,

@@ -212,10 +212,18 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
             continue
 
         slug = get_feature_slug(feature)
+        submitted_value = features_dto.get(slug)
+        if submitted_value is None and feature.id is not None:
+            submitted_value = features_dto.get(str(feature.id))
         submitted = slug in features_dto or (
             feature.id is not None and str(feature.id) in features_dto
         )
-        if feature.mandatory and not submitted:
+        # B4: mandatory means "present with a non-empty value". A submitted
+        # empty value (null / '' / []) is treated as missing — otherwise it
+        # normalizes to a valid-but-empty value and is dropped from the DAO.
+        raw = submitted_value.get('value') if isinstance(submitted_value, dict) else submitted_value
+        is_empty = raw is None or raw == '' or raw == []
+        if feature.mandatory and (not submitted or is_empty):
             errors[slug] = f"Mandatory feature '{feature.name}' is required"
 
     if errors:
@@ -399,14 +407,32 @@ def validate_dto_structured(
         if config.type == 'header':
             continue
 
-        # Skip optional features with empty values
+        # B4: a mandatory feature submitted with an empty value (null / '' / [])
+        # is *missing*, not valid. Without this, normalization coerces the empty
+        # value into a valid one (int None->0, string None->'', select None->[],
+        # date None allowed) so validation passes, yet normalize_to_dao then
+        # drops the empty value — the mandatory feature silently vanishes from
+        # the DAO. JS is not the source of truth (docs §4), so reject here.
         raw_value = dto_data.get('value') if isinstance(dto_data, dict) else dto_data
-        if not feature.mandatory and (raw_value is None or raw_value == '' or raw_value == []):
+        is_empty = raw_value is None or raw_value == '' or raw_value == []
+        if not feature.mandatory and is_empty:
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
                 status=ValidationStatus.OK
             ))
+            continue
+        if feature.mandatory and is_empty:
+            results.append(FeatureValidationResult(
+                id=feature.id,
+                slug=slug,
+                status=ValidationStatus.VALIDATION_FAILED,
+                error=ValidationErrorCode.MANDATORY_MISSING,
+                localizable_error=ERROR_CODE_TO_KEY[ValidationErrorCode.MANDATORY_MISSING],
+                params={'feature': feature.name, 'slug': slug},
+                message=f"Mandatory feature '{feature.name}' is required"
+            ))
+            all_valid = False
             continue
 
         # Validate DTO structure and value

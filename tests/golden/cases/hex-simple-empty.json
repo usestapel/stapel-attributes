@@ -1,0 +1,37 @@
+{
+  "config": {
+    "options": [
+      {
+        "hex": "#FF0000",
+        "label": "Red",
+        "simple": ""
+      }
+    ],
+    "type": "hex_color"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "allowCustom": false,
+        "options": [
+          {
+            "hex": "#FF0000",
+            "label": "Red",
+            "simple": ""
+          }
+        ],
+        "type": "hex_color"
+      }
+    },
+    "python": {
+      "error_code": "INVALID_CONFIG",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "hex-simple-empty",
+  "kind": "config",
+  "note": "B6: default new palette row has simple:'' — Python requires it",
+  "type": "hex_color"
+}

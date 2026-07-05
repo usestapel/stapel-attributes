@@ -1,0 +1,25 @@
+{
+  "config": {
+    "maxLength": 2,
+    "type": "string"
+  },
+  "divergence": null,
+  "dto": {
+    "type": "string",
+    "value": "😀😀"
+  },
+  "expect": {
+    "js": {
+      "valid": true
+    },
+    "python": {
+      "error_code": null,
+      "normalized": null,
+      "valid": true
+    }
+  },
+  "id": "string-emoji-maxlength",
+  "kind": "dto",
+  "note": "B5a: '😀😀' is 2 code points; maxLength 2 accepts on both sides",
+  "type": "string"
+}

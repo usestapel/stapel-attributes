@@ -1,0 +1,42 @@
+{
+  "config": {
+    "options": [
+      {
+        "label": "A",
+        "value": "a"
+      },
+      {
+        "label": "A2",
+        "value": "a"
+      }
+    ],
+    "type": "hierarchical_select"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "options": [
+          {
+            "label": "A",
+            "value": "a"
+          },
+          {
+            "label": "A2",
+            "value": "a"
+          }
+        ],
+        "type": "hierarchical_select"
+      }
+    },
+    "python": {
+      "error_code": "INVALID_CONFIG",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "hierarchical-dup-siblings",
+  "kind": "config",
+  "note": "duplicate sibling values JS may collect — Python catches",
+  "type": "hierarchical_select"
+}

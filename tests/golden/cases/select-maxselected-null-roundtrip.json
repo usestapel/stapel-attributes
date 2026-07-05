@@ -1,0 +1,65 @@
+{
+  "config": {
+    "maxSelected": null,
+    "options": [
+      {
+        "label": "A",
+        "value": "a"
+      },
+      {
+        "label": "B",
+        "value": "b"
+      }
+    ],
+    "type": "select",
+    "uiStyle": "chips"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "lockUserInput": false,
+        "maxSelected": null,
+        "options": [
+          {
+            "label": "A",
+            "value": "a"
+          },
+          {
+            "label": "B",
+            "value": "b"
+          }
+        ],
+        "type": "select",
+        "uiStyle": "chips"
+      }
+    },
+    "python": {
+      "error_code": null,
+      "normalized": {
+        "lockUserInput": false,
+        "minSelected": 0,
+        "options": [
+          {
+            "default": false,
+            "label": "A",
+            "value": "a"
+          },
+          {
+            "default": false,
+            "label": "B",
+            "value": "b"
+          }
+        ],
+        "translatable_options": true,
+        "type": "select",
+        "uiStyle": "chips"
+      },
+      "valid": true
+    }
+  },
+  "id": "select-maxselected-null-roundtrip",
+  "kind": "config",
+  "note": "maxSelected null (unlimited) survives round-trip",
+  "type": "select"
+}

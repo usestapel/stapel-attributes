@@ -1,0 +1,27 @@
+{
+  "config": {
+    "type": "int"
+  },
+  "divergence": {
+    "known": "LN-C04",
+    "reason": "JS parseInt truncates e-notation to 1; Python int() rejects the string"
+  },
+  "dto": {
+    "type": "int",
+    "value": "1e5"
+  },
+  "expect": {
+    "js": {
+      "valid": true
+    },
+    "python": {
+      "error_code": "INVALID_TYPE",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "e-notation-int",
+  "kind": "dto",
+  "note": "B8/LN-C04: JS parseInt('1e5')=1 (valid); Python int('1e5') raises (INVALID_TYPE)",
+  "type": "int"
+}

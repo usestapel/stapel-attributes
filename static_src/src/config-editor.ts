@@ -8,6 +8,7 @@ import { property, state } from "lit/decorators.js";
 import type { FormFieldDecl, TypeDecl, FeatureConfig, I18nLike, InlineOption } from "./types.js";
 import { labelToValue, removePrefix } from "./runtime/keys.js";
 import { SIMPLE_COLORS, getColorStyle, isGradient } from "./editors/colors.js";
+import { resolveConfigWidget, BUILTIN_CONFIG_WIDGET, type ConfigWidgetFactory } from "./registry.js";
 
 type Row = Record<string, unknown>;
 
@@ -25,6 +26,9 @@ export class ConfigEditorElement extends LitElement {
   @state() private data: Record<string, unknown> = {};
   /** Positional manual-edit latch (LN-C03), key `${field}_${idx|path}`. */
   private manual = new Set<string>();
+  /** Mounted host config-widget elements, cached per field name so their own
+   *  state survives re-render (B1). Cleared when the declaration changes. */
+  private hostWidgets = new Map<string, HTMLElement>();
 
   static override styles: CSSResultGroup = css`
     :host { display: block; color: var(--stapel-color-text, #1f2430); font: var(--stapel-font, inherit); }
@@ -50,13 +54,17 @@ export class ConfigEditorElement extends LitElement {
   `;
 
   override willUpdate(changed: Map<string, unknown>): void {
-    if (changed.has("declaration")) this.seedData();
+    if (changed.has("declaration")) {
+      this.hostWidgets.clear();
+      this.seedData();
+    }
   }
 
   /** Load a config into the editor. */
   setConfig(config: FeatureConfig | null): void {
     this.data = {};
     this.manual.clear();
+    this.hostWidgets.clear();
     if (config) for (const [k, v] of Object.entries(config)) if (k !== "type") this.data[k] = v;
     this.seedData();
     this.requestUpdate();
@@ -117,8 +125,10 @@ export class ConfigEditorElement extends LitElement {
         return this.filterNodes((d as Row[]) || []);
       case "max_selected_dropdown": {
         const raw = this.data[f.name];
-        if (raw === "" ) return null; // unlimited
-        return raw === undefined ? undefined : parseInt(String(raw), 10);
+        if (raw === "" || raw === null) return null; // unlimited (B2/LN-B07: real null, not NaN)
+        if (raw === undefined) return undefined;
+        const n = parseInt(String(raw), 10);
+        return isNaN(n) ? null : n;
       }
       case "checkbox":
         return d === undefined ? (f.default ?? false) : !!d;
@@ -158,6 +168,11 @@ export class ConfigEditorElement extends LitElement {
   }
 
   private renderKind(f: FormFieldDecl): TemplateResult {
+    // B1: consult the config-widget registry first. A host override for a
+    // built-in kind, or a widget for an exotic kind, wins; the built-in
+    // sentinel (and any unknown kind) falls through to the native switch.
+    const widget = resolveConfigWidget(f.kind);
+    if (widget && widget !== BUILTIN_CONFIG_WIDGET) return this.renderHostWidget(f, widget);
     switch (f.kind) {
       case "number": return this.renderNumber(f);
       case "text": case "translatable_text": return this.renderText(f);
@@ -173,6 +188,23 @@ export class ConfigEditorElement extends LitElement {
       case "hierarchical_options": return this.renderHierarchical(f);
       default: return this.renderText(f); // LN-C07 unknown-kind fallback -> text
     }
+  }
+
+  /** Mount a host-registered config widget for this field, cached so its state
+   *  survives re-render. The widget reports edits via `onChange`; its value is
+   *  written straight into the working store and flows through getConfig(). */
+  private renderHostWidget(f: FormFieldDecl, factory: ConfigWidgetFactory): TemplateResult {
+    let el = this.hostWidgets.get(f.name);
+    if (!el) {
+      el = factory({
+        field: f,
+        value: this.data[f.name],
+        onChange: (v: unknown) => { this.data[f.name] = v; this.emit(); },
+        i18n: this.i18n,
+      });
+      this.hostWidgets.set(f.name, el);
+    }
+    return html`${el}`;
   }
 
   private renderNumber(f: FormFieldDecl): TemplateResult {
@@ -307,7 +339,9 @@ export class ConfigEditorElement extends LitElement {
     const optionsData = (this.data["options"] as unknown[]) || [];
     const n = Math.max(optionsData.length, 1); // LN-C12
     const cur = this.data[f.name];
-    const selected = cur !== undefined && cur !== null ? String(cur) : (f.default !== undefined ? String(f.default) : "1");
+    // B2: no value and no declared default => "Unlimited" ("" ), matching the
+    // engine's SelectConfig.maxSelected default of None (unlimited).
+    const selected = cur !== undefined && cur !== null ? String(cur) : (f.default !== undefined ? String(f.default) : "");
     return html`<select @change=${(e: Event) => { this.data[f.name] = (e.target as HTMLSelectElement).value; this.emit(); }}>
       ${Array.from({ length: n }, (_, k) => k + 1).map((i) => html`<option value=${String(i)} ?selected=${selected === String(i)}>${i}${i === 1 ? " " + this.i18n.t("admin.attributes.single_select") : ""}</option>`)}
       <option value="" ?selected=${selected === ""}>${this.i18n.t("admin.attributes.unlimited")}</option>

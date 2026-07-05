@@ -1,0 +1,24 @@
+{
+  "config": {
+    "type": "date"
+  },
+  "divergence": null,
+  "dto": {
+    "type": "date",
+    "value": 1751000000
+  },
+  "expect": {
+    "js": {
+      "valid": true
+    },
+    "python": {
+      "error_code": null,
+      "normalized": null,
+      "valid": true
+    }
+  },
+  "id": "date-timestamp-roundtrip",
+  "kind": "dto",
+  "note": "timestamp value round-trips",
+  "type": "date"
+}

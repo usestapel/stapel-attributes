@@ -259,9 +259,30 @@ window.StapelAttributes.registerValueEditor(
 );
 ```
 
+`registerConfigWidget(kind, factory)` works the same way for a config **field-kind**:
+`<stapel-config-editor>` resolves every kind through the registry before its
+built-in renderer, so a host factory overrides a built-in kind or supplies an
+exotic one. Built-in kinds are seeded at import (a `BUILTIN_CONFIG_WIDGET`
+sentinel = "render natively"), so `registeredConfigWidgetKinds()` lists them and
+an override wins (later wins).
+
 The screens that *drive* these components (feature-editor, children-editor,
 convert-type) live in **stapel-categories**, not here (see
 docs/attributes-admin-ui.md §"Разделение собственности").
+
+### Cross-language golden bridge (`tests/golden/`)
+
+The config a JS widget emits is validated by the Python engine; `tests/golden/`
+pins that round-trip. One JSON corpus is run by **both** `tests/test_golden.py`
+(pytest) and `static_src/src/golden.test.ts` (vitest), with a cross-agreement
+assertion — the two engines must agree unless a case records an explicit
+`divergence`. Regenerate expectations with `GOLDEN_RECORD=1` (byte-stable) and
+keep `tests/golden/declarations.json` (the committed `form_declarations()`
+snapshot, drift-gated) in sync when a declaration changes.
+
+**Pattern contract**: a string `pattern` matches the **whole** value
+(`re.fullmatch` / `^(?:…)$`) and is a JS-RegExp-compatible subset. String
+length is counted in Unicode **code points** on both sides.
 
 ## Anti-patterns
 

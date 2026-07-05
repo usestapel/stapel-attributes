@@ -1,0 +1,33 @@
+{
+  "config": {
+    "options": [
+      1,
+      2,
+      3.5
+    ],
+    "type": "int"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "allowCustom": true,
+        "options": [
+          1,
+          2,
+          3.5
+        ],
+        "type": "int"
+      }
+    },
+    "python": {
+      "error_code": "INVALID_CONFIG",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "int-options-float",
+  "kind": "config",
+  "note": "B6: a float in int options — Python rejects",
+  "type": "int"
+}

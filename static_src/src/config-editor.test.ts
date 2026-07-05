@@ -3,6 +3,11 @@ import "./config-editor.js";
 import { ConfigEditorElement } from "./config-editor.js";
 import { I18n } from "./runtime/i18n.js";
 import type { TypeDecl } from "./types.js";
+import {
+  registerConfigWidget,
+  BUILTIN_CONFIG_WIDGET,
+  type ConfigWidgetOptions,
+} from "./registry.js";
 
 const i18n = new I18n("en", {
   en: {
@@ -84,6 +89,52 @@ describe("ConfigEditorElement output filtering (LN-C)", () => {
     el.setConfig({ type: "int", options: [1, null as unknown as number, 2] });
     await el.updateComplete;
     expect(el.getConfig().options).toEqual([1, 2]);
+  });
+});
+
+describe("ConfigEditor config-widget registry (B1)", () => {
+  beforeEach(() => (document.body.innerHTML = ""));
+
+  it("renders a host-registered widget for an exotic kind and flows its value", async () => {
+    registerConfigWidget("size_grid", (opts: ConfigWidgetOptions) => {
+      const input = document.createElement("input");
+      input.className = "host-size-grid";
+      input.addEventListener("input", () => opts.onChange((input as HTMLInputElement).value));
+      return input;
+    });
+    const decl: TypeDecl = { label_key: "k", fields: [{ name: "grid", kind: "size_grid", label_key: "k.grid" }] };
+    const el = make(decl, "custom");
+    await el.updateComplete;
+    const host = el.shadowRoot!.querySelector("input.host-size-grid") as HTMLInputElement;
+    expect(host).toBeTruthy(); // exotic kind rendered by the registry, not a bare text input
+    host.value = "3x3";
+    host.dispatchEvent(new Event("input"));
+    await el.updateComplete;
+    expect(el.getConfig().grid).toBe("3x3");
+  });
+
+  it("an un-overridden exotic kind (no widget) falls back to a text input (LN-C07)", async () => {
+    const decl: TypeDecl = { label_key: "k", fields: [{ name: "mystery", kind: "no_widget_kind", label_key: "k.m" }] };
+    const el = make(decl, "custom");
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelector("input[type=text]")).toBeTruthy();
+  });
+
+  it("a host override of a built-in kind takes over its rendering", async () => {
+    registerConfigWidget("number", (_opts: ConfigWidgetOptions) => {
+      const el = document.createElement("div");
+      el.className = "host-number";
+      return el;
+    });
+    try {
+      const decl: TypeDecl = { label_key: "k", fields: [{ name: "n", kind: "number", label_key: "k.n", params: { step: 1 } }] };
+      const el = make(decl, "int");
+      await el.updateComplete;
+      expect(el.shadowRoot!.querySelector("div.host-number")).toBeTruthy();
+      expect(el.shadowRoot!.querySelector('input[type="number"]')).toBeNull();
+    } finally {
+      registerConfigWidget("number", BUILTIN_CONFIG_WIDGET); // restore for other tests
+    }
   });
 });
 

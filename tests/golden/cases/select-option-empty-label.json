@@ -1,0 +1,35 @@
+{
+  "config": {
+    "options": [
+      {
+        "label": "",
+        "value": "a"
+      }
+    ],
+    "type": "select"
+  },
+  "divergence": null,
+  "expect": {
+    "js": {
+      "emits": {
+        "lockUserInput": false,
+        "options": [
+          {
+            "label": "",
+            "value": "a"
+          }
+        ],
+        "type": "select"
+      }
+    },
+    "python": {
+      "error_code": "INVALID_CONFIG",
+      "normalized": null,
+      "valid": false
+    }
+  },
+  "id": "select-option-empty-label",
+  "kind": "config",
+  "note": "B6: JS latch lets a blank label through; Python rejects with a structured envelope",
+  "type": "select"
+}

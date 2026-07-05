@@ -1,0 +1,409 @@
+{
+  "bool": {
+    "fields": [
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.bool.trueLabel",
+        "name": "trueLabel",
+        "params": {
+          "placeholder": "yes"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.bool.falseLabel",
+        "name": "falseLabel",
+        "params": {
+          "placeholder": "no"
+        }
+      }
+    ],
+    "label_key": "admin.attributes.type.bool"
+  },
+  "date": {
+    "fields": [
+      {
+        "default": "date",
+        "kind": "select",
+        "label_key": "admin.attributes.form.date.precision",
+        "name": "precision",
+        "params": {
+          "options": [
+            {
+              "label": "Year only",
+              "value": "year"
+            },
+            {
+              "label": "Month (year + month)",
+              "value": "month"
+            },
+            {
+              "label": "Date (year + month + day)",
+              "value": "date"
+            },
+            {
+              "label": "Date & Time",
+              "value": "datetime"
+            }
+          ]
+        },
+        "required": true
+      },
+      {
+        "kind": "timestamp",
+        "label_key": "admin.attributes.form.date.minDate",
+        "name": "minDate",
+        "params": {
+          "placeholder": "Select minimum date..."
+        }
+      },
+      {
+        "kind": "timestamp",
+        "label_key": "admin.attributes.form.date.maxDate",
+        "name": "maxDate",
+        "params": {
+          "placeholder": "Select maximum date..."
+        }
+      },
+      {
+        "default": true,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.date.allowFuture",
+        "name": "allowFuture"
+      },
+      {
+        "default": true,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.date.allowPast",
+        "name": "allowPast"
+      },
+      {
+        "kind": "timestamp",
+        "label_key": "admin.attributes.form.date.default",
+        "name": "default",
+        "params": {
+          "placeholder": "Select default date..."
+        }
+      },
+      {
+        "kind": "timestamp_array",
+        "label_key": "admin.attributes.form.date.options",
+        "name": "options",
+        "params": {
+          "placeholder": "Add preset date options"
+        }
+      },
+      {
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.date.lockInput",
+        "name": "lockInput"
+      },
+      {
+        "kind": "text",
+        "label_key": "admin.attributes.form.date.placeholder",
+        "name": "placeholder",
+        "params": {
+          "placeholder": "Select date..."
+        }
+      }
+    ],
+    "label_key": "admin.attributes.type.date"
+  },
+  "float": {
+    "fields": [
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.float.min",
+        "name": "min",
+        "params": {
+          "step": 0.01
+        }
+      },
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.float.max",
+        "name": "max",
+        "params": {
+          "step": 0.01
+        }
+      },
+      {
+        "default": 2,
+        "kind": "number",
+        "label_key": "admin.attributes.form.float.precision",
+        "name": "precision",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "number_options",
+        "label_key": "admin.attributes.form.float.options",
+        "name": "options",
+        "params": {
+          "itemType": "number"
+        }
+      },
+      {
+        "default": true,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.float.allowCustom",
+        "name": "allowCustom"
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.float.prefix",
+        "name": "prefix",
+        "params": {
+          "placeholder": "$"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.float.postfix",
+        "name": "postfix",
+        "params": {
+          "placeholder": "m²"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.float.postfix1000",
+        "name": "postfix1000",
+        "params": {
+          "placeholder": "k"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.float.placeholder",
+        "name": "placeholder"
+      }
+    ],
+    "label_key": "admin.attributes.type.float"
+  },
+  "header": {
+    "fields": [
+      {
+        "default": "h2",
+        "kind": "select",
+        "label_key": "admin.attributes.form.header.style",
+        "name": "style",
+        "params": {
+          "options": [
+            {
+              "label": "H1 - Large",
+              "value": "l"
+            },
+            {
+              "label": "H2 - Medium",
+              "value": "m"
+            }
+          ]
+        },
+        "required": true
+      }
+    ],
+    "label_key": "admin.attributes.type.header"
+  },
+  "hex_color": {
+    "fields": [
+      {
+        "kind": "color_options",
+        "label_key": "admin.attributes.form.hex_color.options",
+        "name": "options"
+      },
+      {
+        "default": false,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.hex_color.allowCustom",
+        "name": "allowCustom"
+      }
+    ],
+    "label_key": "admin.attributes.type.hex_color"
+  },
+  "hierarchical_select": {
+    "fields": [
+      {
+        "kind": "hierarchical_options",
+        "label_key": "admin.attributes.form.hierarchical_select.options",
+        "name": "options"
+      }
+    ],
+    "label_key": "admin.attributes.type.hierarchical_select"
+  },
+  "int": {
+    "fields": [
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.int.min",
+        "name": "min",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.int.max",
+        "name": "max",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "number_options",
+        "label_key": "admin.attributes.form.int.options",
+        "name": "options",
+        "params": {
+          "itemType": "number"
+        }
+      },
+      {
+        "default": true,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.int.allowCustom",
+        "name": "allowCustom"
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.int.prefix",
+        "name": "prefix",
+        "params": {
+          "placeholder": "$"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.int.postfix",
+        "name": "postfix",
+        "params": {
+          "placeholder": "km"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.int.postfix1000",
+        "name": "postfix1000",
+        "params": {
+          "placeholder": "k"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.int.placeholder",
+        "name": "placeholder"
+      }
+    ],
+    "label_key": "admin.attributes.type.int"
+  },
+  "select": {
+    "fields": [
+      {
+        "kind": "select_options_with_default",
+        "label_key": "admin.attributes.form.select.options",
+        "name": "options"
+      },
+      {
+        "default": "dropdown",
+        "kind": "select",
+        "label_key": "admin.attributes.form.select.uiStyle",
+        "name": "uiStyle",
+        "params": {
+          "options": [
+            {
+              "label": "Chips/Tags",
+              "value": "chips"
+            },
+            {
+              "label": "Checkboxes (like checklist)",
+              "value": "checkboxes"
+            },
+            {
+              "label": "Dropdown",
+              "value": "dropdown"
+            }
+          ]
+        },
+        "required": true
+      },
+      {
+        "default": 0,
+        "kind": "number",
+        "label_key": "admin.attributes.form.select.minSelected",
+        "name": "minSelected",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "max_selected_dropdown",
+        "label_key": "admin.attributes.form.select.maxSelected",
+        "name": "maxSelected"
+      },
+      {
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.select.lockUserInput",
+        "name": "lockUserInput"
+      }
+    ],
+    "label_key": "admin.attributes.type.select"
+  },
+  "string": {
+    "fields": [
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.string.minLength",
+        "name": "minLength",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.string.maxLength",
+        "name": "maxLength",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "text",
+        "label_key": "admin.attributes.form.string.pattern",
+        "name": "pattern"
+      },
+      {
+        "kind": "string_options",
+        "label_key": "admin.attributes.form.string.options",
+        "name": "options"
+      },
+      {
+        "default": true,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.string.allowCustom",
+        "name": "allowCustom"
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.string.prefix",
+        "name": "prefix",
+        "params": {
+          "placeholder": "$"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.string.postfix",
+        "name": "postfix",
+        "params": {
+          "placeholder": "m²"
+        }
+      },
+      {
+        "kind": "translatable_text",
+        "label_key": "admin.attributes.form.string.placeholder",
+        "name": "placeholder"
+      }
+    ],
+    "label_key": "admin.attributes.type.string"
+  }
+}

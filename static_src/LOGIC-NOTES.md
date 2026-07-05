@@ -220,6 +220,44 @@ that drive it live in categories. size_grid/convertible_unit → app-layer worke
   *current* behavior + a `// LN-Bxx: latent, preserved 1:1` comment, so a future fix is a
   visible, tested decision.
 
+### Code-review fixes (2026-07-05, tasks/opus/fix-attributes-admin.md)
+
+- **LN-D07 (B7)** The legacy `header.label` config field is **dropped** from the form
+  declaration. `HeaderConfig` never had `label` (parse_config silently discarded it) and the
+  header value-editor reads `config.title ?? config.name`, never `label`. Header text is
+  authored through the feature definition's `name` (docs §4; `header/type.py` dto_to_dao) — a
+  required-but-ignored config field was a port artifact, removed rather than wired to a
+  redundant second source.
+- **B2 (select defaults)** Declaration defaults realigned to the **engine** dataclass defaults
+  (`uiStyle='dropdown'`, `maxSelected` unlimited) instead of legacy's chips/1, so an untouched
+  select round-trips to what the UI showed. Chosen because it reinterprets no stored config
+  and retroactively invalidates no multi-select DAO. `max_selected_dropdown` now shows/emits
+  real `null` for unlimited (was `parseInt('null')=NaN` "working" only via JSON — LN-B07 latent
+  bug, now intentional).
+- **B5 (unicode/regex)** String length counts Unicode **code points** (`[...s].length`) to match
+  Python `len()`; pattern validation is **whole-value** (`^(?:…)$`, mirroring Python
+  `re.fullmatch`). Pattern is a JS-RegExp-compatible subset — engine-only regex features are
+  out of the cross-language contract (docs decision 4 addendum).
+- **B1 (config-widget registry)** `renderKind` consults `resolveConfigWidget` before its native
+  switch; built-in kinds are seeded with a `BUILTIN_CONFIG_WIDGET` sentinel so
+  `registeredConfigWidgetKinds()` is non-empty and a host `registerConfigWidget()` override (or
+  exotic kind) actually renders.
+
+### Recorded-but-not-fixed deviations (B8 — carried, not port-complete)
+
+- **LN-C17 / LN-C19 not ported**: the ui-field-prefix injection for `translatable_text`
+  (`_getUiFieldPrefix`) and re-prefixing on `translateMode` change are **not** implemented;
+  `optionPrefix()` covers only option-key prefixing (LN-C16). Deferred — needs its own port +
+  test pass; recorded here per the docs rule.
+- **LN-C12 clamp not ported**: `renderMaxSelected` does not clamp a stored `maxSelected` greater
+  than the current option count down to that count. Low impact (Python validates bounds);
+  recorded, not fixed.
+- **LN-V22 silent cap**: multi-dropdown add path still bypasses the `toggle()` hard cap
+  (validation flags it; input is not blocked). Recorded, unchanged.
+- **LN-C04 e-notation**: `parseInt('1e5')=1` — silent truncation in int fields, inherited from
+  legacy. Pinned as an explicit golden divergence (`tests/golden/cases/e-notation-int.json`):
+  JS accepts `1` where Python's `int('1e5')` rejects (INVALID_TYPE).
+
 ---
 
 _Inventory total: 13 kinds, 9 type declarations, ~30 config-editor behaviors (LN-C*),
