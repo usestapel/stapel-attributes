@@ -309,6 +309,16 @@ other turns a test red.
 (`re.fullmatch` / `^(?:…)$`) and is a JS-RegExp-compatible subset. String
 length is counted in Unicode **code points** on both sides.
 
+## Admin categories — `@access` declarations (admin-suite AS-5)
+
+N/A — this library owns no Django models and no `admin.py` (verified:
+no `models.py`/`models/` package anywhere outside `.venv`/`build`, no
+`ModelAdmin` registrations). Attribute *values* live on the host
+application's own tables (`CategoryFeature`-style DAOs in `types/*/dao.py`
+write through host-provided storage, not a table this package migrates);
+category/access classification is the owning host model's decision, not
+this library's. Nothing to decorate.
+
 ## Anti-patterns
 
 - **Don't fork to add a type** — the registry is the seam. If a new hook on
