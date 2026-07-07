@@ -4,6 +4,12 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.3.2] - 2026-07-08
+
+### Changed
+- Reworded internal provenance comments/docstrings for consistency. No
+  behavior change.
+
 ## [0.3.1] - 2026-07-06
 
 ### Changed
