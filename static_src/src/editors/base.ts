@@ -1,4 +1,4 @@
-// Base value-editor — Lit port of legacy value_editor.js (LOGIC-NOTES LN-V00).
+// Base value-editor — Lit port of the legacy value_editor.js (LOGIC-NOTES LN-V00).
 // Contract preserved 1:1: `getValue()` returns the DTO or null verbatim; empty
 // maps to the WHOLE value being null; the required check is strict `=== null`;
 // the sole output is onChange(dto, errors). Rendering is Lit; styling is

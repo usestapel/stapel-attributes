@@ -1,7 +1,7 @@
 """
 Tests for the polymorphic feature type system.
 
-Port of legacy-catalog ``categories/tests/test_feature_types.py`` (the
+Port of the legacy catalog's ``categories/tests/test_feature_types.py`` (the
 engine's fidelity proof). Differences from the source suite:
 
 - size_grid / convertible_unit are marketplace-specific and are not shipped

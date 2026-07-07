@@ -3,8 +3,9 @@
 A polymorphic type system for attribute (feature) configurations: an open
 registry of feature types, Config/DTO/DAO layering per type, polymorphic
 DRF serializers with OpenAPI schemas, and a structured value-validation
-pipeline (DTO -> DAO). Ported from legacy-catalog's ``categories/feature_types``
-engine; see MODULE.md for provenance and extension points.
+pipeline (DTO -> DAO). Ported from a legacy catalog app's
+``categories/feature_types`` engine; see MODULE.md for provenance and
+extension points.
 
 This is an L1 *library*: it has no models, migrations, views, urls or comm
 surface of its own. Both stapel-categories (schema side) and stapel-listings

@@ -6,7 +6,7 @@ of :class:`FormField` via :meth:`BaseFeatureType.config_form`; the admin JS
 renders the form from that declaration, so **a newly registered type gets an
 admin form with zero JS** as long as it uses the standard field-kinds.
 
-The declarations are ported 1:1 from the legacy ``feature_types.js``
+The declarations are ported 1:1 from the legacy catalog's ``feature_types.js``
 ``FEATURE_TYPES`` dictionary (static_src/LOGIC-NOTES.md §1–2), including its
 latent quirks (e.g. ``header.style`` default ``'h2'`` matches no option —
 LN-B01). Labels are emitted as i18n keys (``admin.attributes.form.<type>.<field>``);
@@ -147,7 +147,7 @@ def _select_form() -> List[FormField]:  # LN-T-select
     # B2 canon: the untouched-form defaults MUST equal the engine dataclass
     # defaults (SelectConfig: uiStyle='dropdown', maxSelected=None=unlimited),
     # so a select saved without touching these fields round-trips to what the
-    # UI displayed. Chosen over legacy's chips/1 because it keeps the engine's
+    # UI displayed. Chosen over the legacy chips/1 default because it keeps the engine's
     # established default — no stored config that omits these keys is
     # reinterpreted, and no already-stored multi-select DAO is retroactively
     # invalidated by a maxSelected=1 cap. ``maxSelected`` carries no default

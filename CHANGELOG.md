@@ -69,7 +69,7 @@ changes (B2, B5b).
 ### Changed — contract (migration notes)
 - **B2 — select form defaults** now match the **engine** dataclass
   (`SelectConfig`): the untouched admin form emits/round-trips to
-  `uiStyle='dropdown'` and `maxSelected` = unlimited, not legacy's `chips` / `1`.
+  `uiStyle='dropdown'` and `maxSelected` = unlimited, not the legacy `chips` / `1`.
   *Migration:* a select saved through the admin UI without touching these fields
   now stores `dropdown` / unlimited (previously the UI showed chips/1 but the
   engine stored dropdown/unlimited — the two are now consistent). No stored
@@ -120,7 +120,7 @@ changes (B2, B5b).
 ### Added — schema-driven admin UI (Lit 3)
 - **Field-kind contract** (`config_form.py`): `FIELD_KINDS` (13 kinds),
   `FormField`, `config_form()` hook on `BaseFeatureType` (built-in declarations
-  for the nine types, ported 1:1 from legacy `feature_types.js`), and
+  for the nine types, ported 1:1 from the legacy catalog's `feature_types.js`), and
   `form_declarations()` — a JSON snapshot of all registered types.
 - **`static_src/`** — Lit 3 + TypeScript source (esbuild/vitest toolchain);
   committed bundle `static/stapel_attributes/attributes-admin.js` (~15 KB gzip)
@@ -139,8 +139,8 @@ changes (B2, B5b).
 
 ## [0.1.0] - 2026-07-04
 
-Initial release: port of the typed-attribute engine from
-`legacy-catalog` (`categories/feature_types` + the `ads` value-validation
+Initial release: port of the typed-attribute engine from a legacy
+catalog app (`categories/feature_types` + the `ads` value-validation
 pipeline: `validators.py`, `feature_validator.py`, `validation_result.py`),
 restructured as an L1 Stapel library.
 
@@ -169,7 +169,7 @@ restructured as an L1 Stapel library.
   `collect_all_builtin_translation_keys()` now iterates the registry instead
   of hardcoding type constants.
 
-### Changed (vs legacy-catalog)
+### Changed (vs the legacy catalog)
 - The engine operates on `FeatureDef` config structures, not on
   `categories.models.Feature` / `Category` — the future stapel-categories
   module owns the models and calls this library.

@@ -1,6 +1,6 @@
 """The value-validation pipeline (DTO -> DAO).
 
-Port of legacy-catalog's ``ads/validators.py`` + ``ads/feature_validator.py``,
+Port of the legacy catalog's ``ads/validators.py`` + ``ads/feature_validator.py``,
 decoupled from Django models: every function takes *configs* — an iterable of
 :class:`~stapel_attributes.base.FeatureDef` (or dicts / a ``{slug: ...}``
 mapping coerced via :func:`coerce_feature_defs`) — instead of a Category

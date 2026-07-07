@@ -1,6 +1,6 @@
 # LOGIC-NOTES — extraction inventory for the 1:1 port
 
-Source of truth for porting the legacy-catalog admin static (`categories/static/admin/js/`)
+Source of truth for porting the legacy catalog's admin static (`categories/static/admin/js/`)
 into `stapel-attributes` schema-driven admin components. **The source logic is the
 foundation, not a reference** (docs/attributes-admin-ui.md §"Что сохраняем"): every
 behavior below is ported 1:1; only the rendering layer (IIFE/DOM → Lit) and the
@@ -152,9 +152,9 @@ errors; JS only mirrors UX. docs §4 row "Строгость/валидация"
 
 ## 5. Runtime primitives (one consolidated module)
 
-- **LN-R01 CSRF**: `getCsrfToken()` = `legacyUtils.getCsrfToken` or cookie `csrftoken=([^;]+)`; sent `X-CSRFToken` on POST; re-synced after fetch. (Consolidate — was duplicated.)
+- **LN-R01 CSRF**: `getCsrfToken()` = `LegacyUtils.getCsrfToken` or cookie `csrftoken=([^;]+)`; sent `X-CSRFToken` on POST; re-synced after fetch. (Consolidate — was duplicated.)
 - **LN-R02 Error envelope**: replace all `alert()` (5 sites) with a StapelError component parsing `{localizable_error, error, params}` (docs §4 / decision 4).
-- **LN-R03 Dialog**: one `<stapel-dialog>` = overlay + Escape-close + overlay-click-close + returned close fn (consolidates legacyUI.showModal [no close] + addEscapeHandler + inline test-dialog variant).
+- **LN-R03 Dialog**: one `<stapel-dialog>` = overlay + Escape-close + overlay-click-close + returned close fn (consolidates LegacyUI.showModal [no close] + addEscapeHandler + inline test-dialog variant).
 - **LN-R04 i18n**: mini engine = dict + `{param}` interpolation + fallback to key; catalogs en+ru; partial locale merges over en (docs decision 2). Config-form UI labels are literal (LN-K00); only component chrome/messages are keyed `admin.attributes.*`.
 - **LN-R05 Prefix-injection P1** (payload-time, from `category_feature_editor.js`): `if (translate==='all' && config && name)` → `prefix = name + '.'`; applied to option **`label`** only (not value/icon) for `select`/`hierarchical_select` with array `options`, recursing `children`, **only if `!label.startsWith(prefix)`** (idempotent). `'title'`/`'none'` → no option prefixing. Operates on a deep clone (payload-only).
 - **LN-R06 Title-key gen P3** `slugToTranslationKey(slug)` = `'feature.' + slug.toLowerCase().replace(/[\s-]+/g,'_')`; fires for `'all'`||`'title'` (not `'none'`); name manual-edit latch.
@@ -229,7 +229,7 @@ that drive it live in categories. size_grid/convertible_unit → app-layer worke
   required-but-ignored config field was a port artifact, removed rather than wired to a
   redundant second source.
 - **B2 (select defaults)** Declaration defaults realigned to the **engine** dataclass defaults
-  (`uiStyle='dropdown'`, `maxSelected` unlimited) instead of legacy's chips/1, so an untouched
+  (`uiStyle='dropdown'`, `maxSelected` unlimited) instead of the legacy chips/1, so an untouched
   select round-trips to what the UI showed. Chosen because it reinterprets no stored config
   and retroactively invalidates no multi-select DAO. `max_selected_dropdown` now shows/emits
   real `null` for unlimited (was `parseInt('null')=NaN` "working" only via JSON — LN-B07 latent
@@ -255,7 +255,7 @@ that drive it live in categories. size_grid/convertible_unit → app-layer worke
 - **LN-V22 silent cap**: multi-dropdown add path still bypasses the `toggle()` hard cap
   (validation flags it; input is not blocked). Recorded, unchanged.
 - **LN-C04 e-notation**: `parseInt('1e5')=1` — silent truncation in int fields, inherited from
-  legacy. Pinned as an explicit golden divergence (`tests/golden/cases/e-notation-int.json`):
+  the legacy source. Pinned as an explicit golden divergence (`tests/golden/cases/e-notation-int.json`):
   JS accepts `1` where Python's `int('1e5')` rejects (INVALID_TYPE).
 
 ---

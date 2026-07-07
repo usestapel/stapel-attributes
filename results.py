@@ -1,6 +1,6 @@
 """Structured validation results — the machine-readable vocabulary.
 
-Port of legacy-catalog ``ads/validation_result.py``. The enums here are the
+Port of the legacy catalog's ``ads/validation_result.py``. The enums here are the
 shared vocabulary between the type plugins (which raise
 :class:`stapel_attributes.exceptions.FeatureValidationError` carrying a
 :class:`ValidationErrorCode`) and the batch validators in

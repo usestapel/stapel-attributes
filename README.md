@@ -11,8 +11,8 @@ views, urls or comm surface. Both `stapel-categories` (attribute schema) and
 synchronously lives one layer down, like `stapel-core` itself.
 
 Provenance: port of the `categories/feature_types` engine and the
-`ads` validation pipeline from legacy-catalog (see CHANGELOG for what was
-fixed in transit).
+`ads` validation pipeline from a legacy catalog app (see CHANGELOG for what
+was fixed in transit).
 
 ## Install
 

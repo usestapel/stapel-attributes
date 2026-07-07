@@ -7,7 +7,7 @@ This module defines the core abstractions:
 - ``DaoMeta``: base dataclass with common metadata fields for all DAOs
 - ``FeatureDef``: the plain feature-definition structure the engine operates on.
 
-Unlike the legacy-catalog origin, the engine is decoupled from any Django
+Unlike the legacy catalog origin, the engine is decoupled from any Django
 model: ``dto_to_dao`` and the validation pipeline receive :class:`FeatureDef`
 structures (built from JSON/dicts or by a model owner such as the future
 stapel-categories module), never ORM instances.
@@ -137,7 +137,8 @@ class DaoMeta:
 class FeatureDef:
     """A feature definition — the structure the engine operates on.
 
-    This is the library-level replacement for legacy's ``categories.models.Feature``:
+    This is the library-level replacement for the legacy catalog's
+    ``categories.models.Feature``:
     the owning module (e.g. stapel-categories) materializes its model rows into
     ``FeatureDef`` instances (or plain dicts of the same shape) and hands them
     to the validation pipeline.

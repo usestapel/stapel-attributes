@@ -1,6 +1,6 @@
 """Structured validation exceptions.
 
-Replaces legacy-catalog's ``feature_validator._extract_error_info`` (which
+Replaces the legacy catalog's ``feature_validator._extract_error_info`` (which
 regex-parsed human-readable ``ValidationError`` message strings back into
 error codes — a known defect). Here every validation failure raised by the
 engine carries its machine code, reference value and localizable params

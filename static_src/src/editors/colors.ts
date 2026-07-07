@@ -1,4 +1,4 @@
-// Ported 1:1 from legacy color_mappings.js (LOGIC-NOTES LN-X01..X03). The
+// Ported 1:1 from the legacy color_mappings.js (LOGIC-NOTES LN-X01..X03). The
 // value-editor uses THIS table — `custom` has a conic-gradient here (18/18),
 // unlike feature_types.js's copy.
 

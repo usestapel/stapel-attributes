@@ -1,6 +1,6 @@
 """Value-validation pipeline tests (DTO -> DAO).
 
-Port of legacy-catalog ``ads/tests/test_validators.py`` — the Category/Feature
+Port of the legacy catalog's ``ads/tests/test_validators.py`` — the Category/Feature
 model fixture became a list of ``FeatureDef`` structures — plus coverage of
 the structured validators (``ads/feature_validator.py`` in the source) and
 the structured error codes that replaced regex message parsing.

@@ -6,8 +6,8 @@
 
 **Kind: L1 library** — importable by any module (stapel-categories,
 stapel-listings, ...); it has **no** models, migrations, views, urls, comm
-surface or service identity of its own. Provenance: port of legacy-catalog's
-`categories/feature_types` engine + the `ads` value-validation pipeline
+surface or service identity of its own. Provenance: port of the legacy
+catalog's `categories/feature_types` engine + the `ads` value-validation pipeline
 (defects fixed in transit — see CHANGELOG 0.1.0).
 
 ## What this library provides
@@ -74,7 +74,7 @@ validation, DAO normalization and OpenAPI schemas with zero further wiring.
 
 #### Worked example: registering a marketplace `size_grid` type
 
-legacy's `size_grid` (clothing/shoe size tables) and `convertible_unit` are
+The legacy `size_grid` (clothing/shoe size tables) and `convertible_unit` are
 deliberately **not** shipped — they are marketplace vertical types. This is
 how a vertical package adds one:
 
