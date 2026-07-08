@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/usestapel/stapel-attributes/actions/workflows/ci.yml/badge.svg)](https://github.com/usestapel/stapel-attributes/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/usestapel/stapel-attributes/graph/badge.svg)](https://codecov.io/gh/usestapel/stapel-attributes)
+[![PyPI](https://img.shields.io/pypi/v/stapel-attributes.svg)](https://pypi.org/project/stapel-attributes/)
 
 Typed attributes engine for the [Stapel framework](https://github.com/usestapel) —
 a polymorphic type system for attribute ("feature") configurations: an open
