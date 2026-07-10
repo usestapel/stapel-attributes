@@ -95,7 +95,7 @@ class FeatureForm(forms.ModelForm):
 
 Two themes (`--stapel-*`, light + dark), en/ru locales (merge without fork via
 `ADMIN_LOCALES`), and JS widget registries for exotic types. See MODULE.md
-"Admin UI" and docs/attributes-admin-ui.md. Frontend source is in `static_src/`
+"Admin UI" and docs/done/attributes-admin-ui.md. Frontend source is in `static_src/`
 (`npm test` / `npm run build`); the built bundle is committed — consumers need no
 Node.
 
