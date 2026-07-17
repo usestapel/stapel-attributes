@@ -20,6 +20,10 @@
     ],
     "label_key": "admin.attributes.type.bool"
   },
+  "convertible_unit": {
+    "fields": [],
+    "label_key": "admin.attributes.type.convertible_unit"
+  },
   "date": {
     "fields": [
       {

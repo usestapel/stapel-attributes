@@ -49,13 +49,16 @@ result = validate_dto_structured(configs, payload)  # machine-readable batch res
 ## Built-in types
 
 `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`,
-`hierarchical_select`. Each type is a plugin: a Config dataclass (schema), a
-DTO (client input), a DAO (stored value + display metadata) and a handler
-(`BaseFeatureType[TConfig, TDto, TDao]`).
+`hierarchical_select`, `convertible_unit`. Each type is a plugin: a Config
+dataclass (schema), a DTO (client input), a DAO (stored value + display
+metadata) and a handler (`BaseFeatureType[TConfig, TDto, TDao]`).
+`convertible_unit` stores values in a canonical base unit per family
+(length/weight/area/volume/temperature) and converts to/from the user-facing
+unit — see MODULE.md for the storage/conversion/range-filter contract.
 
-Marketplace-specific types (size grids, convertible units, ...) are **not**
-shipped — hosts register their own via the open registry (see MODULE.md for
-the worked example).
+Other marketplace-specific types (size grids, ...) are **not** shipped —
+hosts register their own via the open registry (see MODULE.md for the worked
+example).
 
 ## Settings
 

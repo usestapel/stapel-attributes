@@ -4,9 +4,11 @@ Tests for the polymorphic feature type system.
 Port of the legacy catalog's ``categories/tests/test_feature_types.py`` (the
 engine's fidelity proof). Differences from the source suite:
 
-- size_grid / convertible_unit are marketplace-specific and are not shipped
-  here (registered app-layer via the open registry) — their test classes
-  stayed with the vertical;
+- size_grid is marketplace-specific and is not shipped here (registered
+  app-layer via the open registry) — its test class stayed with the
+  vertical. convertible_unit *was* the same kind of vertical registration but
+  is generic enough to ship as a built-in (see
+  tests/test_convertible_unit.py for its dedicated suite);
 - the Feature/Category model classes moved to stapel-categories with the
   models; their engine-level assertions are covered via the registry API.
 
@@ -33,7 +35,7 @@ from stapel_attributes.serializers import (
 )
 
 BUILTIN_TYPES = [
-    'bool', 'date', 'float', 'header', 'hex_color',
+    'bool', 'convertible_unit', 'date', 'float', 'header', 'hex_color',
     'hierarchical_select', 'int', 'select', 'string',
 ]
 
@@ -46,7 +48,7 @@ class TestFeatureTypeRegistry:
     """Tests for the feature type registry."""
 
     def test_all_types_registered(self):
-        """All 9 built-in feature types should be registered."""
+        """All 10 built-in feature types should be registered."""
         type_slugs = get_all_type_slugs()
         assert sorted(set(type_slugs) & set(BUILTIN_TYPES)) == sorted(BUILTIN_TYPES)
 
@@ -79,10 +81,11 @@ class TestFeatureTypeRegistry:
             assert hasattr(ft, 'dto_to_dao')
 
     def test_marketplace_types_not_shipped(self):
-        """size_grid / convertible_unit are app-layer registrations, not built-ins."""
+        """size_grid stays an app-layer registration; convertible_unit is a
+        built-in now (see tests/test_convertible_unit.py)."""
         slugs = get_all_type_slugs()
         assert 'size_grid' not in slugs
-        assert 'convertible_unit' not in slugs
+        assert 'convertible_unit' in slugs
 
 
 # ============================================================================

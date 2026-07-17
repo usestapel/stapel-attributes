@@ -16,7 +16,7 @@ catalog's `categories/feature_types` engine + the `ads` value-validation pipelin
 |---|---|
 | Engine core (`base.py`) | `BaseFeatureType[TConfig, TDto, TDao]` — the type-plugin ABC; `DictDataclassSerializer` (dataclass serializer returning dicts, drf-polymorphic-compatible); `DaoMeta` (shared DAO metadata: name/order/title/badge/translate); `FeatureDef` — the plain feature-definition structure the engine operates on (slug, config, id, name, mandatory, display flags) |
 | Type registry (`registry.py`) | Open registry (`register_feature_type`, `registered_types`, `get_feature_type`, `get_all_type_slugs`); parse/convert helpers (`parse_config`, `parse_dto`, `dao_to_dict`, `dto_to_dao`, `normalize_feature_dto`, `validate_feature_config`, `validate_feature_dto`, `format_feature_value`, `get_default_value`); translation-key helpers |
-| Built-in types (`types/`) | `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`, `hierarchical_select` — each a plugin directory of `config.py` / `dto.py` / `dao.py` / `type.py` |
+| Built-in types (`types/`) | `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`, `hierarchical_select`, `convertible_unit` — each a plugin directory of `config.py` / `dto.py` / `dao.py` / `type.py` |
 | Polymorphic serializers (`serializers.py`) | Factories for `FeatureConfig`/`FeatureDto`/`FeatureDao` polymorphic serializers (drf-polymorphic, `type` discriminator) + `PolymorphicProxySerializer`s for OpenAPI (drf-spectacular); caches keyed on the registry version, so late registrations are always reflected |
 | Validation pipeline (`validation.py`) | `validate_dto(configs, dto)` (raise-style), `normalize_to_dao(configs, dto)` (DTO→DAO with header injection and ordering), `validate_dto_structured` / `validate_configs_structured` / `validate_dao_structured` (batch results), `validate_description`; `coerce_feature_defs` accepts FeatureDef lists, dicts, or `{slug: config}` mappings |
 | Structured errors (`results.py`, `exceptions.py`, `errors.py`) | `ValidationErrorCode` vocabulary, `FeatureValidationResult`/`ValidationBatchResult` (+ serializers), `FeatureValidationError` (a Django `ValidationError` carrying `error_code`/`ref_value`/`error_params`), localizable `error.400.feature_*` keys registered with stapel-core |
@@ -74,9 +74,10 @@ validation, DAO normalization and OpenAPI schemas with zero further wiring.
 
 #### Worked example: registering a marketplace `size_grid` type
 
-The legacy `size_grid` (clothing/shoe size tables) and `convertible_unit` are
-deliberately **not** shipped — they are marketplace vertical types. This is
-how a vertical package adds one:
+The legacy `size_grid` (clothing/shoe size tables) is deliberately **not**
+shipped — it is a marketplace vertical type (the CPU/size-table use case is
+covered generically by the shipped `hierarchical_select`). This is how a
+vertical package adds a type like it:
 
 ```python
 # fashion_vertical/attribute_types/size_grid/type.py
@@ -175,6 +176,50 @@ register_feature_type(SizeGridFeatureType)
 Custom types should raise `FeatureValidationError` with a code from
 `ValidationErrorCode`; a plain `ValidationError` still works but degrades to
 `invalid_format` in structured results.
+
+### `convertible_unit` — values with convertible units
+
+Unlike `size_grid`, `convertible_unit` (values with a user-facing unit —
+lengths, weights, areas, volumes, temperatures) is generic enough to ship as
+a built-in (`types/convertible_unit/`) rather than stay a vertical
+registration; it used to be paired with `size_grid` in the "not shipped"
+note above.
+
+- **Unit families are presets, not user config**: `types/convertible_unit/constants.UNIT_FAMILIES`
+  ships `length`, `weight`, `area`, `volume`, `temperature`, each shaped
+  `{'base_unit': <code>, 'units': {<code>: <factor-to-base>, ...}}`. A
+  feature's config picks one family (`unitType`) and which metric/imperial
+  unit of it to offer (`unit_m`/`unit_i`, at least one required) —
+  ported from the legacy marketplace catalog's `UNIT_DEFINITIONS`/`UNIT_SYSTEMS`.
+- **Storage is always in the base unit**: the DAO's `value` is always the
+  family's canonical base unit (`m`, `kg`, `m2`, `l`, or `c` for
+  temperature — an affine, not multiplicative, conversion). The DTO wire
+  shape is `{type, value, unit}` — the number as entered plus which offered
+  unit it's in; `normalize_dto` converts it to the base unit (via
+  `constants.convert_to_base`) before validation ever sees it. Omitting
+  `unit` means "already in the base unit" (the same contract int/float use
+  for their plain `value` — a headless caller writing canonical values
+  directly).
+- **`min`/`max` and range filtering are both in the base unit**: config
+  `min`/`max` bound the base-unit value directly, so `validate_dto` never
+  needs to know which display unit the submission used. The same base-unit
+  canon is why range-filter search (e.g. "listings between 1m and 2m") needs
+  no per-type engine support here — a consumer (stapel-listings) converts its
+  query bounds to the base unit once (`constants.convert_to_base` /
+  `ConvertibleUnitFeatureType.to_base`) and then runs a plain numeric
+  `BETWEEN` against the stored `value`, exactly like an `int`/`float` range
+  filter already would.
+- **Display** (`format_value`) converts the stored base value back to
+  `unit_m` (or `unit_i` if unset) and appends the unit code — the legacy
+  type's `format_value` ignored `unit_m`/`unit_i` and printed the base value
+  under the family name (e.g. `"length: 100"`, not even a real unit); fixed
+  in transit here, same as the other CHANGELOG-documented port fixes.
+- Not yet declared: an admin `config_form()` (defaults to an empty
+  declaration, same as any registered type that doesn't override it — see
+  `tests/sample_types.RatingFeatureType`). A JS value-editor widget is a
+  follow-up if/when this type needs an admin UI; nothing in the engine
+  blocks adding one later (`registerValueEditor`/`registerConfigWidget`, see
+  the Admin UI section below).
 
 ### Validation API (what modules call)
 

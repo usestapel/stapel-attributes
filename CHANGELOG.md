@@ -4,6 +4,33 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.4.2] - 2026-07-17
+
+Ships `convertible_unit` as a built-in type (was documented in MODULE.md as
+"deliberately not shipped" alongside `size_grid`; `size_grid` stays a
+vertical-only registration, `convertible_unit` is generic enough to graduate).
+Additive — a new registered slug, no changes to existing types' behavior.
+Patch (pre-1.0: minor = breaking, patch = compatible; this is purely additive).
+
+### Added
+- `types/convertible_unit/` — a numeric value with a user-facing unit,
+  converted to/from a canonical base unit. Ships five unit-family presets
+  (`constants.UNIT_FAMILIES`): `length` (base `m`), `weight` (base `kg`),
+  `area` (base `m2`), `volume` (base `l`), `temperature` (base `c`, affine).
+  Config picks a family (`unitType`) and offers a metric and/or imperial unit
+  of it (`unit_m`/`unit_i`); `min`/`max` and the DAO's stored `value` are
+  always in the base unit, so range-filter queries need only convert their
+  bounds to the base unit once (`constants.convert_to_base` /
+  `ConvertibleUnitFeatureType.to_base`) and then run a plain numeric range
+  comparison — no type-specific filter support needed elsewhere.
+- Ported from the legacy marketplace catalog's
+  `categories/feature_types/types/convertible_unit`, with two defects fixed
+  in transit (see `types/convertible_unit/type.py` docstring for detail):
+  the legacy `normalize_dto` accepted `{value: {value, unit}}` but discarded
+  `unit`, silently storing non-base-unit submissions as if they were already
+  in the base unit; the legacy `format_value` ignored `unit_m`/`unit_i` and
+  printed the base value under the family name instead of a real unit.
+
 ## [0.4.1] - 2026-07-17
 
 Fleet follow-up to stapel-core 0.12.0 (legacy shim sweep). No source
