@@ -57,6 +57,9 @@ class TestLazyExports:
             "form_declarations",
             "ConfigEditorWidget",
             "get_config_editor_widget",
+            # Profile-field bridge (§66, optional — no stapel-profiles dependency)
+            "PROFILE_KIND_TO_FIELD_KIND",
+            "field_kind_for",
             # Polymorphic serializer factories
             "get_feature_config_serializer_class",
             "get_feature_dto_serializer_class",

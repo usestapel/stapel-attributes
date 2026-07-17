@@ -64,6 +64,9 @@ __all__ = [
     "form_declarations",
     "ConfigEditorWidget",
     "get_config_editor_widget",
+    # Profile-field bridge (§66, optional — no stapel-profiles dependency)
+    "PROFILE_KIND_TO_FIELD_KIND",
+    "field_kind_for",
     # Polymorphic serializer factories
     "get_feature_config_serializer_class",
     "get_feature_dto_serializer_class",
@@ -123,6 +126,9 @@ _LAZY_EXPORTS = {
     # admin widget (Django-importing; lazy so package import stays Django-free)
     "ConfigEditorWidget": ".widgets",
     "get_config_editor_widget": ".widgets",
+    # profile-field bridge
+    "PROFILE_KIND_TO_FIELD_KIND": ".profile_bridge",
+    "field_kind_for": ".profile_bridge",
     # serializer factories
     "get_feature_config_serializer_class": ".serializers",
     "get_feature_dto_serializer_class": ".serializers",

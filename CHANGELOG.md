@@ -4,6 +4,22 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.4.3] - 2026-07-17
+
+Additive-only. Patch (pre-1.0: minor = breaking, patch = compatible).
+
+### Added
+- `profile_bridge.py` (§66, docs/pending/profile-fields.md §4): a small
+  `PROFILE_KIND_TO_FIELD_KIND` lookup table + `field_kind_for()` helper
+  mapping a `stapel_profiles.field_defs.ProfileFieldKind` value (`text`,
+  `bool`, `enum`, `model_ref`, `geohash`) to the matching
+  `stapel_attributes.config_form.FIELD_KINDS` key — so a shop/classified
+  projection building a filterable attribute FROM a profile field (e.g. an
+  `occupation` custom field) doesn't re-derive the admin-config-form shape
+  by hand. No dependency on `stapel-profiles` added — this module is a pure
+  string-keyed dict, `stapel_profiles.field_defs.ProfileFieldDef.attribute_kind`
+  is the (optional, try/except ImportError) caller.
+
 ## [0.4.2] - 2026-07-17
 
 Ships `convertible_unit` as a built-in type (was documented in MODULE.md as
