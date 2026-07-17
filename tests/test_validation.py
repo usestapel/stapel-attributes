@@ -301,20 +301,6 @@ class TestValidateDtoStructured:
         assert row.error == ValidationErrorCode.ABOVE_MAXIMUM
         assert row.ref_value == 1
 
-    def test_plain_validation_error_degrades_to_invalid_format(self, registry_snapshot):
-        """A third-party type raising a bare ValidationError still reports."""
-        from stapel_attributes.tests.sample_types import LegacyFeatureType
-        from stapel_attributes.registry import register_feature_type
-
-        register_feature_type(LegacyFeatureType)
-
-        legacy_configs = [FeatureDef(slug="x", config={"type": "legacy"})]
-        result = validate_dto_structured(legacy_configs, {"x": {"value": "v"}})
-        row = result.results[0]
-        assert row.status == ValidationStatus.VALIDATION_FAILED
-        assert row.error == ValidationErrorCode.INVALID_FORMAT
-        assert row.message == "legacy message"
-
 
 class TestValidateConfigsStructured:
     def test_all_valid(self, car_features):

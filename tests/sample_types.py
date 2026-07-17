@@ -1,15 +1,11 @@
 """Sample custom feature types used by the extension-point tests.
 
 ``RatingFeatureType`` is NOT decorated — tests register it explicitly
-(runtime API or an EXTRA_TYPES class path). ``LegacyFeatureType`` raises a
-plain Django ``ValidationError`` to exercise the degradation path for
-third-party types that have not adopted ``FeatureValidationError``.
+(runtime API or an EXTRA_TYPES class path).
 """
 
 from dataclasses import dataclass
-from typing import List, Literal, Optional
-
-from django.core.exceptions import ValidationError
+from typing import List, Literal
 
 from stapel_attributes.base import BaseFeatureType, DaoMeta, DictDataclassSerializer, FeatureDef
 from stapel_attributes.exceptions import FeatureValidationError
@@ -88,61 +84,3 @@ class RatingFeatureType(BaseFeatureType[RatingConfig, RatingDto, RatingDao]):
 
     def get_builtin_translation_keys(self) -> List[str]:
         return ['feature.rating.name']
-
-
-# ---------------------------------------------------------------------------
-# legacy — raises a bare ValidationError (no machine code)
-# ---------------------------------------------------------------------------
-
-@dataclass
-class LegacyConfig:
-    type: Literal['legacy'] = 'legacy'
-
-
-class LegacyConfigSerializer(DictDataclassSerializer):
-    class Meta:
-        dataclass = LegacyConfig
-
-
-@dataclass
-class LegacyDto:
-    type: Literal['legacy'] = 'legacy'
-    value: Optional[str] = None
-
-
-class LegacyDtoSerializer(DictDataclassSerializer):
-    class Meta:
-        dataclass = LegacyDto
-
-
-@dataclass
-class LegacyDao(DaoMeta):
-    type: Literal['legacy'] = 'legacy'
-    value: Optional[str] = None
-
-
-class LegacyDaoSerializer(DictDataclassSerializer):
-    class Meta:
-        dataclass = LegacyDao
-
-
-class LegacyFeatureType(BaseFeatureType[LegacyConfig, LegacyDto, LegacyDao]):
-    slug = 'legacy'
-    name = 'Legacy'
-
-    config_class = LegacyConfig
-    dto_class = LegacyDto
-    dao_class = LegacyDao
-
-    config_serializer_class = LegacyConfigSerializer
-    dto_serializer_class = LegacyDtoSerializer
-    dao_serializer_class = LegacyDaoSerializer
-
-    def validate_config(self, config: LegacyConfig) -> None:
-        pass
-
-    def validate_dto(self, config: LegacyConfig, dto: LegacyDto) -> None:
-        raise ValidationError("legacy message")
-
-    def dto_to_dao(self, config: LegacyConfig, dto: LegacyDto, feature: FeatureDef) -> LegacyDao:
-        return LegacyDao(type=self.slug, value=dto.value, name=feature.name)

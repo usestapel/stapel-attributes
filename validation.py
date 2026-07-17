@@ -18,7 +18,9 @@ Fixed while porting (do not reintroduce):
 
 - ``_extract_error_info`` regex-parsed ValidationError message strings; the
   engine now raises :class:`FeatureValidationError` carrying machine codes,
-  and this module reads them structurally (``_error_info``).
+  and the batch validators read them off the exception directly. Feature
+  types MUST raise ``FeatureValidationError`` — a bare ``ValidationError``
+  from a type plugin is a contract violation and propagates.
 - ``_get_feature_slug`` / ``_build_feature_lookup`` were duplicated across
   three source files; :func:`get_feature_slug` / :func:`build_feature_lookup`
   are the single copies.
@@ -115,22 +117,6 @@ def build_feature_lookup(
             lookup[str(feature.id)] = feature
         lookup[slug] = feature
     return lookup, allowed_features
-
-
-def _error_info(
-    exc: ValidationError,
-) -> Tuple[ValidationErrorCode, Optional[Any], str]:
-    """Read structured error info off a validation exception.
-
-    ``FeatureValidationError`` (everything the engine raises) carries its
-    machine code and reference value directly. A plain ``ValidationError``
-    (e.g. from a third-party type plugin that has not adopted the structured
-    exception) degrades to INVALID_FORMAT with the message preserved.
-    """
-    message = exc.messages[0] if hasattr(exc, 'messages') and exc.messages else str(exc)
-    if isinstance(exc, FeatureValidationError):
-        return exc.error_code, exc.ref_value, message
-    return ValidationErrorCode.INVALID_FORMAT, None, message
 
 
 # =============================================================================
@@ -459,18 +445,16 @@ def validate_dto_structured(
                 status=ValidationStatus.OK
             ))
 
-        except ValidationError as exc:
-            error_code, ref_value, message = _error_info(exc)
-
+        except FeatureValidationError as exc:
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
                 status=ValidationStatus.VALIDATION_FAILED,
-                error=error_code,
-                ref_value=ref_value,
-                localizable_error=ERROR_CODE_TO_KEY.get(error_code),
+                error=exc.error_code,
+                ref_value=exc.ref_value,
+                localizable_error=ERROR_CODE_TO_KEY.get(exc.error_code),
                 params={'feature': feature.name, 'slug': slug},
-                message=message
+                message=exc.messages[0] if exc.messages else str(exc)
             ))
             all_valid = False
 
@@ -554,18 +538,16 @@ def validate_configs_structured(configs: ConfigsInput) -> ValidationBatchResult:
                 status=ValidationStatus.OK
             ))
 
-        except ValidationError as exc:
-            error_code, ref_value, message = _error_info(exc)
-
+        except FeatureValidationError as exc:
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
                 status=ValidationStatus.VALIDATION_FAILED,
-                error=error_code,
-                ref_value=ref_value,
-                localizable_error=ERROR_CODE_TO_KEY.get(error_code),
+                error=exc.error_code,
+                ref_value=exc.ref_value,
+                localizable_error=ERROR_CODE_TO_KEY.get(exc.error_code),
                 params={'feature': feature.name, 'slug': slug},
-                message=message
+                message=exc.messages[0] if exc.messages else str(exc)
             ))
             all_valid = False
 

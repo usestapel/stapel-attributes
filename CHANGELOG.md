@@ -4,6 +4,25 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.4.0] - 2026-07-17
+
+Legacy-compat scrub. Minor bump (pre-1.0: minor = breaking) — a plugin-facing
+compat behavior is removed.
+
+### Removed
+- `base._dataclass_to_dict_no_none` — backwards-compatible underscored alias
+  for `dataclass_to_dict_no_none` (the legacy framework's exported name).
+  Unused; the public name is unchanged.
+- `validation._error_info` and its degradation path: a bare Django
+  `ValidationError` raised by a type plugin was degraded to `INVALID_FORMAT`
+  in `validate_dto_structured` / `validate_configs_structured`. Feature types
+  MUST raise `FeatureValidationError` (machine code + ref_value); a bare
+  `ValidationError` now propagates instead of being masked. **Breaking** for
+  third-party types that never adopted the structured exception.
+- `tests/sample_types.LegacyFeatureType` (+ its Config/Dto/Dao/serializers)
+  and `test_plain_validation_error_degrades_to_invalid_format` — existed only
+  to exercise the removed degradation path.
+
 ## [0.3.4] - 2026-07-17
 
 ### Changed

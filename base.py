@@ -55,10 +55,6 @@ def dataclass_to_dict_no_none(instance: Any) -> Dict[str, Any]:
     return result
 
 
-# Backwards-compatible alias (the legacy framework exported the underscored name).
-_dataclass_to_dict_no_none = dataclass_to_dict_no_none
-
-
 class DictDataclassSerializer(DataclassSerializer):
     """
     DataclassSerializer that returns dict for drf-polymorphic compatibility.
