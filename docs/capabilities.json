@@ -1,0 +1,51 @@
+{
+  "module": "stapel-attributes",
+  "version": "0.4.3",
+  "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, nine built-in types, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
+  "axes": [
+    {
+      "key": "EXTRA_TYPES",
+      "kind": "list",
+      "default": [],
+      "group": "attributes.types",
+      "gates": {
+        "operations": [],
+        "co_gates": []
+      },
+      "curated": {
+        "summary": "MERGE (additive over the nine built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).",
+        "business_label": "Extra attribute (feature) types available to categories/listings"
+      }
+    }
+  ],
+  "extension_points": [
+    {
+      "name": "EXTRA_TYPES",
+      "kind": "dotted_path_list",
+      "summary": "Open, merge-over-builtins type registry (register_feature_type / registered_types / get_feature_type in registry.py); the flagship open seam this library exposes — no fork needed to add a domain-specific attribute type (MODULE.md 'What this library provides', 'Extension points')."
+    },
+    {
+      "name": "ADMIN_WIDGETS",
+      "kind": "dotted_path_merge",
+      "summary": "Swap ConfigEditorWidget behaviour per type via STAPEL_ATTRIBUTES['ADMIN_WIDGETS'] (dotted-path merge) (MODULE.md 'Admin seams')."
+    },
+    {
+      "name": "ADMIN_EXTRA_CSS / ADMIN_EXTRA_JS",
+      "kind": "asset_list",
+      "summary": "Extra CSS/JS assets loaded alongside the admin config editor, e.g. a JS widget for an app-layer EXTRA_TYPES entry registered via window.StapelAttributes.registerConfigWidget/registerValueEditor (MODULE.md 'Admin seams', worked example)."
+    },
+    {
+      "name": "ADMIN_LOCALES",
+      "kind": "dict_merge",
+      "summary": "Partial dict/static-path merged over the built-in en/ru admin locale strings (MODULE.md 'Admin seams')."
+    }
+  ],
+  "operations_total": 0,
+  "requires": [
+    {
+      "module": "stapel-core",
+      "optional": false,
+      "reason": "AppSettings config layer, error registry — the only stapel-* dependency (pyproject.toml dependency; conf.py:8, errors.py:9)"
+    }
+  ]
+}
