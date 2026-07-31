@@ -51,6 +51,10 @@ stapel_attributes = [
     "static/stapel_attributes/*.js",
     "static/stapel_attributes/*.css",
     "static/stapel_attributes/locales/*.json",
+    "docs/capabilities.json",
+    "docs/flows.json",
+    "docs/errors.json",
+    "CONFIG.MD",
 ]
 
 [tool.pytest.ini_options]
