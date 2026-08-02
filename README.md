@@ -6,6 +6,7 @@
 [![downloads](https://static.pepy.tech/badge/stapel-attributes/month)](https://pepy.tech/project/stapel-attributes)
 [![python](https://img.shields.io/pypi/pyversions/stapel-attributes?logo=python&logoColor=white)](https://pypi.org/project/stapel-attributes/)
 [![license](https://img.shields.io/github/license/usestapel/stapel-attributes)](https://github.com/usestapel/stapel-attributes/blob/main/LICENSE)
+[![llms.txt](https://img.shields.io/badge/llms.txt-blue)](https://github.com/usestapel/stapel-attributes/blob/main/docs/llms.txt)
 
 Typed attributes engine for the [Stapel framework](https://github.com/usestapel) —
 a polymorphic type system for attribute ("feature") configurations: an open
