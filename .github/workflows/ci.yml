@@ -60,7 +60,10 @@ jobs:
         run: python -c "import stapel_attributes; print('import OK')"
 
       - name: Install test dependencies
-        run: pip install pytest pytest-django pytest-cov
+        # stapel-tools carries the llms.txt emitter tests/test_contract.py
+        # drift-gates; without it that gate silently skips (pytest.importorskip)
+        # instead of actually running.
+        run: pip install pytest pytest-django pytest-cov "stapel-tools>=0.9.1,<1"
 
       - name: Tests with coverage
         run: |
