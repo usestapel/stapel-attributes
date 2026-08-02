@@ -4,6 +4,27 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.4.5] - 2026-08-02
+
+Packaging / contract only. Patch.
+
+### Added
+- `docs/llms.txt` — the fifth contract artifact — is now emitted, drift-gated
+  by `make contract`/`contract-check`, and badged in the README.
+  `docs/capabilities.json` remains hand-written (stapel-catalog sweep); these
+  targets manage only `docs/llms.txt` and never touch `capabilities.json`.
+  No `surface` entries exist yet, so the generated llms.txt's Usage surface
+  section is empty (pre-existing gap, not introduced here).
+
+### Fixed
+- `docs/capabilities.json`'s hand-maintained `version` field had drifted to
+  `0.4.3` (missed the 0.4.4 bump); corrected to match `pyproject.toml`. Content
+  (provides/axes/extension_points/surface) unchanged.
+- CI now tests Python 3.14 (the version actually deployed), badge canon
+  applied, and `docs/llms.txt`/`docs/capabilities.json`/`docs/flows.json`/
+  `docs/errors.json`/`CONFIG.MD` are now listed in `package-data` so they ship
+  in the wheel.
+
 ## [0.4.3] - 2026-07-17
 
 Additive-only. Patch (pre-1.0: minor = breaking, patch = compatible).
