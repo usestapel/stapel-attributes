@@ -40,6 +40,276 @@
       "summary": "Partial dict/static-path merged over the built-in en/ru admin locale strings (MODULE.md 'Admin seams')."
     }
   ],
+  "surface": [
+    {
+      "name": "dataclass_to_dict_no_none",
+      "kind": "factory",
+      "path": "stapel_attributes.base.dataclass_to_dict_no_none",
+      "intent": "Recursively convert a (possibly nested) dataclass into a dict with None-valued fields dropped — the shape every DAO/config must serialize to for storage and API output. Use this instead of dataclasses.asdict(), which keeps None keys and doesn't match the None-omission convention every type plugin here relies on.",
+      "instead_of": [
+        "dataclasses.asdict() (stdlib) — keeps None-valued fields"
+      ]
+    },
+    {
+      "name": "form_declarations",
+      "kind": "factory",
+      "path": "stapel_attributes.config_form.form_declarations",
+      "intent": "JSON-serializable snapshot of every registered type's admin config-form declaration (built-ins + EXTRA_TYPES + runtime) — this is what ConfigEditorWidget hands to the client JS. Call it directly only if you are rendering the schema-driven form somewhere other than the built-in widget; otherwise get_config_editor_widget() already wires it for you.",
+      "instead_of": [
+        "hand-writing per-type admin config-form field declarations in JS"
+      ]
+    },
+    {
+      "name": "field_kind_for",
+      "kind": "factory",
+      "path": "stapel_attributes.profile_bridge.field_kind_for",
+      "intent": "Map a stapel-profiles ProfileFieldKind value to the matching config_form.FIELD_KINDS key — the one lookup a shop/classified projection needs when it builds a filterable attribute FROM a profile field, so the mapping is defined once instead of re-derived (or duplicated) per projection.",
+      "instead_of": [
+        "re-deriving the ProfileFieldKind -> FIELD_KINDS mapping per projection"
+      ]
+    },
+    {
+      "name": "collect_all_builtin_translation_keys",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.collect_all_builtin_translation_keys",
+      "intent": "Every static translation key any registered type (built-in or host-registered) contributes regardless of configuration — the set a translation-catalog completeness check should diff against, so a missing catalog entry for a type's fixed strings (e.g. 'feature.bool.true') is caught mechanically."
+    },
+    {
+      "name": "collect_translation_keys_for_feature",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.collect_translation_keys_for_feature",
+      "intent": "Translation keys a single feature's config actually uses (per-type get_translation_keys), for building a per-listing/per-category translation-key manifest."
+    },
+    {
+      "name": "dao_to_dict",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.dao_to_dict",
+      "intent": "Convert a stored DAO (dataclass or already-dict) into a plain dict with None values excluded, ready to write into a JSONField — the single conversion point so every DAO type serializes identically regardless of whether a type plugin returns a dataclass or a dict."
+    },
+    {
+      "name": "dto_to_dao",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.dto_to_dao",
+      "intent": "Convert an already-validated typed DTO into its typed DAO, threading through config-derived metadata (name/order/title/badge/translate) from the owning FeatureDef. Use this rather than hand-copying DTO fields into a storage dict — the metadata threading is the part that is easy to forget."
+    },
+    {
+      "name": "format_feature_value",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.format_feature_value",
+      "intent": "Render a DAO value as a display string per its type's own formatting rules (units, prefix/postfix, options label lookup, ...). Reach for this wherever a feature value is shown to a human (listing title, badge, admin list) instead of str(value), which drops every type's formatting.",
+      "instead_of": [
+        "str(value) / manual per-type display formatting"
+      ]
+    },
+    {
+      "name": "get_all_feature_types",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.get_all_feature_types",
+      "intent": "Every registered feature-type instance as a list — for building an admin type picker or iterating types generically (e.g. collect_all_builtin_translation_keys is built on this)."
+    },
+    {
+      "name": "get_all_type_slugs",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.get_all_type_slugs",
+      "intent": "Sorted list of every registered type slug — use this to populate a ChoiceField/dropdown of available attribute types instead of hardcoding the nine built-in names, since a host's EXTRA_TYPES entry would silently be missing from a hardcoded list.",
+      "instead_of": [
+        "a hardcoded list/tuple of type-slug choices"
+      ]
+    },
+    {
+      "name": "get_default_value",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.get_default_value",
+      "intent": "The type's default value for a given config, e.g. to pre-fill a form or to decide whether a stored value is 'still at default' — resolves through the registry so a host-registered type's own default is honoured, not just the nine built-ins."
+    },
+    {
+      "name": "get_feature_type",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.get_feature_type",
+      "intent": "Look up one feature type instance by its config 'type' slug, raising ValueError with the full available list on an unknown slug. This is the one lookup every consumer (categories' admin.py, listings) uses instead of hardcoding a slug->class dict.",
+      "instead_of": [
+        "a hand-rolled dict of type slug -> handler class"
+      ]
+    },
+    {
+      "name": "normalize_feature_dto",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.normalize_feature_dto",
+      "intent": "Run only the type's own DTO normalization (dict -> typed dataclass) without the validation step — for callers that need the normalized shape but will validate separately or have already validated."
+    },
+    {
+      "name": "parse_config",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.parse_config",
+      "intent": "Turn a raw config dict (with its 'type' discriminator) into the typed config dataclass for that type, validating shape via the type's own config_serializer_class along the way. Reach for this whenever you need typed field access (config.min, config.options, ...) instead of dict.get() with manual type coercion.",
+      "instead_of": [
+        "dict.get()-based ad hoc access to a config's fields"
+      ]
+    },
+    {
+      "name": "parse_dto",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.parse_dto",
+      "intent": "Turn a raw DTO dict into the typed DTO dataclass for a given type slug, dropping unknown keys. Use it instead of constructing the type's dto_class by hand when you already know the slug and have not yet resolved the config."
+    },
+    {
+      "name": "register_feature_type",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.register_feature_type",
+      "intent": "Register a custom BaseFeatureType (decorator or direct call) from a host AppConfig.ready() to add a domain-specific attribute type without forking the registry — the fork-free way in, alternative to declaring EXTRA_TYPES when the type class already lives in the calling module.",
+      "instead_of": [
+        "a bespoke if/elif type-dispatch chain in place of the open registry"
+      ]
+    },
+    {
+      "name": "registered_types",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.registered_types",
+      "intent": "The full effective slug -> feature-type-instance mapping (built-ins <- EXTRA_TYPES <- runtime, later wins). Reach for this, not a hand-maintained dict, whenever you need to iterate every currently-registered type (form_declarations() is the reference caller)."
+    },
+    {
+      "name": "registry_version",
+      "kind": "factory",
+      "path": "stapel_attributes.registry.registry_version",
+      "intent": "Monotonic counter bumped on every (re-)registration — use it as a cache key when you memoize anything derived from the effective type set (the serializer factories in serializers.py do exactly this), so a late EXTRA_TYPES/runtime registration is never served a stale cache."
+    },
+    {
+      "name": "validate_feature_config",
+      "kind": "gate_function",
+      "path": "stapel_attributes.registry.validate_feature_config",
+      "intent": "Parse AND run the type's own validate_config() in one call, raising FeatureValidationError with a machine error_code on failure. This is what a category/listing admin save path should call to gate an incoming config — not just parse_config() alone, which skips the type-specific business rules (e.g. min <= max)."
+    },
+    {
+      "name": "validate_feature_dto",
+      "kind": "gate_function",
+      "path": "stapel_attributes.registry.validate_feature_dto",
+      "intent": "Normalize AND validate an incoming DTO dict against its config in one call, raising FeatureValidationError on failure. Call this at any boundary that accepts a raw {type, value, ...} payload from a client, instead of normalizing and validating as two separately-forgettable steps."
+    },
+    {
+      "name": "get_feature_config_proxy_serializer",
+      "kind": "factory",
+      "path": "stapel_attributes.serializers.get_feature_config_proxy_serializer",
+      "intent": "The drf-spectacular PolymorphicProxySerializer for feature configs, so OpenAPI schema generation emits a proper oneOf+discriminator instead of an opaque object — wire this into your view's @extend_schema, don't build a proxy serializer by hand per project (used directly by stapel-categories' serializers.py).",
+      "instead_of": [
+        "hand-building a drf_spectacular.utils.PolymorphicProxySerializer per project"
+      ]
+    },
+    {
+      "name": "get_feature_config_serializer_class",
+      "kind": "factory",
+      "path": "stapel_attributes.serializers.get_feature_config_serializer_class",
+      "intent": "The polymorphic DRF serializer class for feature CONFIGS, keyed by the 'type' discriminator and always reflecting the current registry (cached per registry_version). Use this — not a hand-built PolymorphicSerializer subclass — anywhere a config needs (de)serializing across the open type set.",
+      "instead_of": [
+        "a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"
+      ]
+    },
+    {
+      "name": "get_feature_dao_proxy_serializer",
+      "kind": "factory",
+      "path": "stapel_attributes.serializers.get_feature_dao_proxy_serializer",
+      "intent": "Same OpenAPI-schema proxy as get_feature_config_proxy_serializer, for the DAO layer — use it in @extend_schema wherever an endpoint returns stored feature DAO data."
+    },
+    {
+      "name": "get_feature_dao_serializer_class",
+      "kind": "factory",
+      "path": "stapel_attributes.serializers.get_feature_dao_serializer_class",
+      "intent": "The polymorphic DRF serializer for stored feature DAOs — the one to mount on any endpoint that reads back the JSONField feature-value storage as structured output.",
+      "instead_of": [
+        "a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"
+      ]
+    },
+    {
+      "name": "get_feature_dto_proxy_serializer",
+      "kind": "factory",
+      "path": "stapel_attributes.serializers.get_feature_dto_proxy_serializer",
+      "intent": "Same OpenAPI-schema proxy as get_feature_config_proxy_serializer, for the DTO layer — use it in @extend_schema wherever an endpoint accepts feature DTO payloads."
+    },
+    {
+      "name": "get_feature_dto_serializer_class",
+      "kind": "factory",
+      "path": "stapel_attributes.serializers.get_feature_dto_serializer_class",
+      "intent": "The polymorphic DRF serializer for feature DTOs (client-submitted values), non-strict so unknown/draft types don't crash serialization — the one to mount on any endpoint accepting {type, value} feature payloads.",
+      "instead_of": [
+        "a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"
+      ]
+    },
+    {
+      "name": "build_feature_lookup",
+      "kind": "factory",
+      "path": "stapel_attributes.validation.build_feature_lookup",
+      "intent": "Build the {slug-or-id: FeatureDef} lookup dict plus the ordered feature list in one call — the shared first step of every validate_*/normalize_to_dao entry point; use it instead of writing your own indexing loop over a configs iterable."
+    },
+    {
+      "name": "coerce_feature_defs",
+      "kind": "factory",
+      "path": "stapel_attributes.validation.coerce_feature_defs",
+      "intent": "Normalize the three accepted 'configs' shapes (FeatureDef iterable, feature-def-dict iterable, or a {slug: ...} mapping) into one canonical List[FeatureDef], order-preserving. Every entry point into the validation pipeline takes this shape — call this first instead of writing your own dict/list normalization for whatever shape your caller happens to hand you.",
+      "instead_of": [
+        "ad hoc per-call normalization of dict-vs-list-vs-mapping feature-def input"
+      ]
+    },
+    {
+      "name": "get_feature_slug",
+      "kind": "factory",
+      "path": "stapel_attributes.validation.get_feature_slug",
+      "intent": "The slug/name/id fallback used to key a feature definition against an incoming payload — use this everywhere a FeatureDef needs a lookup key so the fallback order stays identical across every caller instead of being re-derived ad hoc per call site."
+    },
+    {
+      "name": "normalize_to_dao",
+      "kind": "factory",
+      "path": "stapel_attributes.validation.normalize_to_dao",
+      "intent": "The DTO-payload -> stored-DAO-dict transform, including auto-injecting header DAOs from the configs and dropping empty/unsubmitted values. This is what should write a feature-tree's stored JSON field — reimplementing it by hand loses the header-injection and empty-value-drop rules silently.",
+      "instead_of": [
+        "hand-written DTO-to-storage-dict mapping"
+      ]
+    },
+    {
+      "name": "validate_configs_structured",
+      "kind": "gate_function",
+      "path": "stapel_attributes.validation.validate_configs_structured",
+      "intent": "Validate every feature's own CONFIG (not the submitted values) — call this when saving the owning entity itself (e.g. a category's feature tree) to catch a broken config (min > max, empty options, ...) before any listing ever submits a value against it."
+    },
+    {
+      "name": "validate_dao_structured",
+      "kind": "gate_function",
+      "path": "stapel_attributes.validation.validate_dao_structured",
+      "intent": "Integrity-check already-stored DAO data against the current configs (type still matches, feature still allowed) — the one to run from a data-migration or admin integrity command when a category's allowed features changed after values were already stored."
+    },
+    {
+      "name": "validate_description",
+      "kind": "gate_function",
+      "path": "stapel_attributes.validation.validate_description",
+      "intent": "Generic free-text length check (default 4-500 chars) returning a FeatureValidationResult with a localizable error key, not a raised exception. Use this for any description-like field instead of a bespoke len(text) check or a Django MinLengthValidator/MaxLengthValidator pair, which don't produce the same machine error code + localizable key shape.",
+      "instead_of": [
+        "a hand-rolled len(text) bounds check",
+        "django.core.validators.MinLengthValidator/MaxLengthValidator used standalone"
+      ]
+    },
+    {
+      "name": "validate_dto",
+      "kind": "gate_function",
+      "path": "stapel_attributes.validation.validate_dto",
+      "intent": "Raise-style validation of a whole {slug: DTO} payload against a feature-def set: mandatory-missing, not-allowed and per-value errors all collected into one Django ValidationError. Reach for this at a model .clean()/full_clean() boundary that wants a single raised exception rather than a structured result.",
+      "instead_of": [
+        "a hand-written per-feature validation loop with Django ValidationError"
+      ]
+    },
+    {
+      "name": "validate_dto_structured",
+      "kind": "gate_function",
+      "path": "stapel_attributes.validation.validate_dto_structured",
+      "intent": "Same DTO validation as validate_dto, but returns a ValidationBatchResult (one FeatureValidationResult per feature, with machine error codes) instead of raising — the one to call from a DRF view/serializer that needs a structured, per-field API error response rather than a single Django exception."
+    },
+    {
+      "name": "get_config_editor_widget",
+      "kind": "factory",
+      "path": "stapel_attributes.widgets.get_config_editor_widget",
+      "intent": "Resolve the Django admin widget for a feature config JSONField, honouring the ADMIN_WIDGETS dotted-path override — use this in a ModelForm/ModelAdmin instead of instantiating ConfigEditorWidget directly, or a host override silently never gets picked up.",
+      "instead_of": [
+        "hardcoding ConfigEditorWidget (or a bespoke forms.Widget) directly in a ModelForm's Meta.widgets"
+      ]
+    }
+  ],
   "operations_total": 0,
   "requires": [
     {

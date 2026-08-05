@@ -1,13 +1,19 @@
 """Drift gate for ``docs/llms.txt``, the fifth contract artifact
 (stapel_tools.llms_txt).
 
-``docs/capabilities.json`` in this module is HAND-WRITTEN (authored in the
-stapel-catalog sweep, commit 9fce193) — there is no gate registry and no
-codegen step to regenerate it from, so this gate does NOT cover
-capabilities.json itself. It covers only ``docs/llms.txt``, which IS
+``docs/capabilities.json`` in this module is otherwise HAND-WRITTEN (authored
+in the stapel-catalog sweep, commit 9fce193) — there is no gate registry and
+no codegen step to derive axes from, so this gate does NOT cover
+capabilities.json itself (that is tests/test_capabilities_surface.py's job,
+for the derived ``surface`` section). It covers ``docs/llms.txt``, which IS
 generated (from capabilities.json) and therefore CAN drift the moment the
-hand-written source changes underneath it without a `make contract` re-run —
-exactly the silent-rot failure mode the fifth artifact exists to catch.
+hand-written source OR the derived surface changes underneath it without a
+`make contract` re-run — exactly the silent-rot failure mode the fifth
+artifact exists to catch.
+
+LLMS_TXT_BUDGET matches the Makefile's ``--budget 4500`` — see its comment
+there for why the 36-entry surface (this L1 library is almost entirely
+surface) needs headroom over the generator's default 4000-token ceiling.
 """
 from pathlib import Path
 
@@ -30,6 +36,7 @@ from stapel_tools.llms_txt import load_inputs, render  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 COMMITTED = REPO / "docs" / "llms.txt"
+LLMS_TXT_BUDGET = 4500
 
 
 def test_llms_txt_committed():
@@ -37,7 +44,7 @@ def test_llms_txt_committed():
 
 
 def test_llms_txt_has_no_drift():
-    rendered = render(load_inputs(REPO))
+    rendered = render(load_inputs(REPO), budget=LLMS_TXT_BUDGET)
     assert COMMITTED.read_text() == rendered, (
         "docs/llms.txt is stale — run `make contract` and commit it"
     )
@@ -45,6 +52,6 @@ def test_llms_txt_has_no_drift():
 
 def test_llms_txt_emission_is_deterministic():
     """Two independent renders are byte-identical (the drift gate is meaningful)."""
-    a = render(load_inputs(REPO))
-    b = render(load_inputs(REPO))
+    a = render(load_inputs(REPO), budget=LLMS_TXT_BUDGET)
+    b = render(load_inputs(REPO), budget=LLMS_TXT_BUDGET)
     assert a == b

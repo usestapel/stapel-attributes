@@ -1,12 +1,15 @@
 # stapel-attributes — docs/llms.txt emission + drift gate (contract-pipeline.md §2-3).
 #
-# docs/capabilities.json here is HAND-WRITTEN (authored in the stapel-catalog
-# sweep, commit 9fce193 "docs: author capabilities.json for the stapel-catalog
-# sweep") — this L1 library has no gate registry, no docs/schema.json, nothing
-# for a codegen step to derive axes/surface from. The targets below manage
-# ONLY the fifth contract artifact, docs/llms.txt (stapel_tools.llms_txt),
-# rendered straight from that curated capabilities.json. They do NOT
-# regenerate or touch capabilities.json itself — that stays hand-edited.
+# docs/capabilities.json here is otherwise HAND-WRITTEN (authored in the
+# stapel-catalog sweep, commit 9fce193 "docs: author capabilities.json for the
+# stapel-catalog sweep") — this L1 library has no gate registry and no
+# docs/schema.json, nothing for a codegen step to derive axes from. It DOES
+# now have a derived `surface` section (discoverability-design.md §1.2): the
+# functions a product is meant to CALL instead of writing its own type
+# dispatch/validation/normalization/formatting. `stapel_tools.surface . --patch`
+# refreshes ONLY module/version + `surface` from docs/capabilities.meta.json,
+# leaving provides/axes/extension_points/requires verbatim. Then docs/llms.txt
+# (the fifth contract artifact) is rendered from the patched document.
 #
 # PYTHON must have stapel-tools importable (the workspace venv, or
 # `pip install stapel-tools`).
@@ -14,14 +17,25 @@ PYTHON ?= python3
 
 .PHONY: contract contract-check
 
-# Emit docs/llms.txt from the (hand-written) docs/capabilities.json.
+# Patch `surface` (+ module/version) into docs/capabilities.json, then emit
+# docs/llms.txt from the result.
+#
+# --budget 4500: the 36-entry surface (this L1 library IS almost entirely
+# surface — see docs/capabilities.meta.json's _comment) runs ~95 tokens over
+# the generator's default 4000-token ceiling. The owner's call: raise the
+# ceiling, do NOT shorten intent/instead_of lines to fit — a trimmed-to-fit
+# context file reads exactly like a complete one, which is the failure mode
+# the hard-budget gate exists to prevent (see stapel-auth/Makefile for the
+# same pattern at a larger scale).
 contract:
-	$(PYTHON) -m stapel_tools.llms_txt .
+	$(PYTHON) -m stapel_tools.surface . --patch
+	$(PYTHON) -m stapel_tools.llms_txt . --budget 4500
 
-# Drift gate: regenerate into a temp dir and diff against the committed docs/llms.txt.
+# Drift gate: regenerate into a temp dir and diff against the committed docs/*.
 contract-check:
+	$(PYTHON) -m stapel_tools.surface . --patch --check
 	@tmp=$$(mktemp -d); \
-	$(PYTHON) -m stapel_tools.llms_txt . --out "$$tmp" || { rm -rf "$$tmp"; exit 1; }; \
+	$(PYTHON) -m stapel_tools.llms_txt . --out "$$tmp" --budget 4500 || { rm -rf "$$tmp"; exit 1; }; \
 	if ! diff -q docs/llms.txt "$$tmp/llms.txt" >/dev/null 2>&1; then \
 		echo "DRIFT: docs/llms.txt is stale — run 'make contract' and commit it"; \
 		diff docs/llms.txt "$$tmp/llms.txt" | head -20; \
