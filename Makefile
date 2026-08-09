@@ -27,9 +27,19 @@ PYTHON ?= python3
 # context file reads exactly like a complete one, which is the failure mode
 # the hard-budget gate exists to prevent (see stapel-auth/Makefile for the
 # same pattern at a larger scale).
+#
+# README.md is the SIXTH artifact (tracker #257): assembled by
+# stapel_tools.readme from docs/readme.md (the human half — what this L1
+# library is, how to think about it) plus everything emitted above. Badges,
+# version, surface counts and doc links are generated, so a release cannot
+# leave them behind. Edit docs/readme.md; never README.md. Several facts
+# (HTTP operations, error codes, documented flows) are legitimately absent
+# for this L1 library — the generator omits zero-valued rows rather than
+# printing 0.
 contract:
 	$(PYTHON) -m stapel_tools.surface . --patch
 	$(PYTHON) -m stapel_tools.llms_txt . --budget 4500
+	$(PYTHON) -m stapel_tools.readme .
 
 # Drift gate: regenerate into a temp dir and diff against the committed docs/*.
 contract-check:
@@ -42,4 +52,5 @@ contract-check:
 		rm -rf "$$tmp"; exit 1; \
 	fi; \
 	rm -rf "$$tmp"; \
-	echo "contract-check: docs/llms.txt up to date"
+	$(PYTHON) -m stapel_tools.readme . --check || exit 1; \
+	echo "contract-check: docs/llms.txt + README.md up to date"
