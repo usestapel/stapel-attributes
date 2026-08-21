@@ -49,6 +49,7 @@
   "admin.attributes.form.string.pattern": "Регулярное выражение",
   "admin.attributes.form.string.options": "Предустановленные значения",
   "admin.attributes.form.string.allowCustom": "Разрешить произвольные значения",
+  "admin.attributes.form.string.multiline": "Многострочное (текстовое поле)",
   "admin.attributes.form.string.prefix": "Префикс (напр. $)",
   "admin.attributes.form.string.postfix": "Постфикс (напр. м²)",
   "admin.attributes.form.string.placeholder": "Плейсхолдер поля",

@@ -129,6 +129,27 @@ class TestPolymorphicSerializers:
         assert serializer.validated_data['min'] == 0
         assert serializer.validated_data['max'] == 100
 
+    def test_config_serializer_string_multiline_round_trip(self):
+        """multiline: true/false round-trips through the polymorphic config
+        serializer both ways (input parse and output representation)."""
+        serializer_class = get_feature_config_serializer_class()
+
+        in_serializer = serializer_class(data={'type': 'string', 'multiline': True})
+        assert in_serializer.is_valid(), in_serializer.errors
+        assert in_serializer.validated_data['multiline'] is True
+
+        from stapel_attributes.types.string.config import StringConfig
+        out = serializer_class().to_representation(StringConfig(multiline=True))
+        assert out['multiline'] is True
+
+    def test_config_serializer_string_multiline_absent_defaults_false(self):
+        """multiline omitted from the payload still parses to False (the
+        dataclass default), matching the flag/absent-flag contract."""
+        serializer_class = get_feature_config_serializer_class()
+        serializer = serializer_class(data={'type': 'string'})
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data.get('multiline', False) is False
+
     def test_config_serializer_string(self):
         """Config serializer should validate string config."""
         data = {'type': 'string', 'minLength': 1, 'maxLength': 255}
@@ -351,6 +372,26 @@ class TestStringFeatureType:
         config = {'type': 'string', 'pattern': r'^[A-Z]+$'}
         with pytest.raises(ValidationError):
             validate_feature_dto(config, {'type': 'string', 'value': 'lowercase'})
+
+    def test_multiline_defaults_false(self):
+        """multiline is absent from a bare config -> parses to the False default."""
+        from stapel_attributes.registry import parse_config
+        config = parse_config({'type': 'string'})
+        assert config.multiline is False
+
+    def test_multiline_true_parses(self):
+        """multiline: true round-trips through parse_config."""
+        from stapel_attributes.registry import parse_config
+        config = parse_config({'type': 'string', 'multiline': True})
+        assert config.multiline is True
+
+    def test_multiline_is_rendering_only_validation_unaffected(self):
+        """multiline changes no validation semantics: minLength/maxLength/
+        pattern still apply exactly the same with multiline True or False."""
+        config = {'type': 'string', 'minLength': 2, 'maxLength': 5, 'multiline': True}
+        validate_feature_dto(config, {'type': 'string', 'value': 'okay'})
+        with pytest.raises(ValidationError):
+            validate_feature_dto(config, {'type': 'string', 'value': 'waytoolong'})
 
 
 # ============================================================================

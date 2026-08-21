@@ -329,6 +329,33 @@ class TestValidateConfigsStructured:
         result = validate_configs_structured(configs)
         assert result.results[0].error == ValidationErrorCode.INVALID_CONFIG
 
+    def test_unknown_config_key_warns_but_stays_valid(self):
+        """A typo'd key ('minLenght') is silently dropped by parse_config's
+        DRF-based parser, not rejected. validate_configs_structured surfaces
+        it as a non-blocking warning instead — status/valid stay OK/True."""
+        configs = [FeatureDef(slug="name", config={"type": "string", "minLenght": 5})]
+        result = validate_configs_structured(configs)
+        assert result.valid is True
+        row = result.results[0]
+        assert row.status == ValidationStatus.OK
+        assert row.warnings == ["Unknown config key(s) ignored: minLenght"]
+
+    def test_multiple_unknown_config_keys_sorted(self):
+        configs = [FeatureDef(
+            slug="name",
+            config={"type": "string", "zzz_typo": 1, "aaa_typo": 2},
+        )]
+        result = validate_configs_structured(configs)
+        assert result.valid is True
+        assert result.results[0].warnings == [
+            "Unknown config key(s) ignored: aaa_typo, zzz_typo"
+        ]
+
+    def test_no_warnings_for_recognized_keys(self, car_features):
+        """No warnings key noise on an all-recognized config."""
+        result = validate_configs_structured(car_features)
+        assert all(row.warnings is None for row in result.results)
+
 
 class TestValidateDaoStructured:
     def test_valid_dao(self, car_features):

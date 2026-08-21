@@ -26,7 +26,7 @@ Fixed while porting (do not reintroduce):
   are the single copies.
 """
 
-from dataclasses import is_dataclass
+from dataclasses import fields, is_dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from django.core.exceptions import ValidationError
@@ -505,12 +505,39 @@ def validate_dto_structured(
     return ValidationBatchResult(valid=all_valid, results=results)
 
 
+def _unknown_config_keys(raw_config: Any, config_class: Any) -> List[str]:
+    """Keys present in a raw config dict but not recognized by ``config_class``.
+
+    ``parse_config`` builds its typed dataclass via a DRF ``DataclassSerializer``
+    (``DictDataclassSerializer``); DRF's default ``to_internal_value`` simply
+    ignores input keys that don't map to a declared field — it never raises.
+    So a typo'd constraint (e.g. ``minLenght``) silently becomes a no-op
+    instead of a validation error, with nothing telling the caller their key
+    was dropped. Detecting this precisely (rejecting the input) would mean
+    swapping the serializer base for one with a strict/unknown-fields mode —
+    a real redesign of the parse seam shared by every type. This is the cheap
+    half: a set-difference against the dataclass fields, surfaced as a
+    non-blocking warning (see :func:`validate_configs_structured`).
+    """
+    if not isinstance(raw_config, dict):
+        return []
+    known = {f.name for f in fields(config_class)}
+    return sorted(k for k in raw_config if k not in known)
+
+
 def validate_configs_structured(configs: ConfigsInput) -> ValidationBatchResult:
     """
     Validate all feature configs in a set of feature definitions.
 
     Used when saving the owning entity (e.g. a category) to ensure configs
     are valid.
+
+    Also surfaces (non-blocking) ``warnings`` on an otherwise-OK result for
+    any raw config key not recognized by the type's config dataclass — see
+    :func:`_unknown_config_keys`. A warning never flips ``status`` to
+    VALIDATION_FAILED or ``valid`` to False: the value was accepted (the
+    unknown key was just dropped), this only flags that the input carried
+    dead weight (usually a typo).
 
     Args:
         configs: Feature definitions (see :func:`coerce_feature_defs`)
@@ -532,10 +559,17 @@ def validate_configs_structured(configs: ConfigsInput) -> ValidationBatchResult:
             feature_type = get_feature_type(config.type)
             feature_type.validate_config(config)
 
+            unknown_keys = _unknown_config_keys(feature.config, type(config))
+            warnings = (
+                [f"Unknown config key(s) ignored: {', '.join(unknown_keys)}"]
+                if unknown_keys else None
+            )
+
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
-                status=ValidationStatus.OK
+                status=ValidationStatus.OK,
+                warnings=warnings,
             ))
 
         except FeatureValidationError as exc:

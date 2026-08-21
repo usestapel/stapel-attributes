@@ -4,6 +4,32 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.4.6] - 2026-08-21
+
+Additive-only. Patch (pre-1.0: minor = breaking, patch = compatible).
+
+Upstream contribution from the stapel-forms build (tasks/stapel-forms-design.md
+§3.1/§11b): the `string` type had no way to declare a textarea vs. a
+single-line input.
+
+### Added
+- `StringConfig.multiline` (default `False`) — a rendering-only hint (textarea
+  vs. single-line input); no validation semantics change (`minLength` /
+  `maxLength` / `pattern` behave identically either way). Declared in
+  `config_form._string_form()` as a `checkbox` field (default `False`,
+  matching the engine's normalized default) and exposed in the admin
+  en/ru locale catalogs (`admin.attributes.form.string.multiline`).
+- `FeatureValidationResult.warnings` (optional, default `None`) — a
+  non-blocking, informational findings list. `validate_configs_structured`
+  now populates it when a raw config dict carries a key its type's config
+  dataclass doesn't recognize (e.g. a typo'd `minLenght`): previously such a
+  key was silently dropped by the DRF-based parser with no signal to the
+  caller. A warning never flips `status`/`valid` — the config is still
+  accepted; this only flags that part of the input was ignored. See
+  MODULE.md "Unknown config keys — silently dropped, warned (not rejected)"
+  for the full contract and why a hard-reject (unknown-fields-strict
+  serializer) was judged out of scope as a redesign of the shared parse seam.
+
 ## [0.4.5] - 2026-08-02
 
 Packaging / contract only. Patch.

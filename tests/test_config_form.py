@@ -155,6 +155,20 @@ def test_string_has_no_postfix1000_and_pattern_is_plain_text():  # LN-B17
     assert "itemType" not in f["options"].params  # string_options has no itemType
 
 
+def test_string_declares_multiline_checkbox_default_false():
+    """multiline: textarea-vs-input rendering hint (stapel-forms contribution).
+    Rendering metadata only -- exposed as a checkbox like the other string
+    booleans, default False so untouched configs keep single-line rendering."""
+    f = _by_name("string")
+    assert f["multiline"].kind == "checkbox"
+    assert f["multiline"].default is False
+    assert f["multiline"].to_dict() == {
+        "name": "multiline", "kind": "checkbox",
+        "label_key": "admin.attributes.form.string.multiline",
+        "default": False,
+    }
+
+
 def test_hex_color_allowCustom_defaults_false():  # LN-B15
     assert _by_name("hex_color")["allowCustom"].default is False
 

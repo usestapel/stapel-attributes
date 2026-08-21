@@ -49,6 +49,7 @@
   "admin.attributes.form.string.pattern": "Regex Pattern",
   "admin.attributes.form.string.options": "Preset Values",
   "admin.attributes.form.string.allowCustom": "Allow Custom Values",
+  "admin.attributes.form.string.multiline": "Multiline (textarea)",
   "admin.attributes.form.string.prefix": "Prefix (e.g., $)",
   "admin.attributes.form.string.postfix": "Postfix (e.g., m²)",
   "admin.attributes.form.string.placeholder": "Input Placeholder",

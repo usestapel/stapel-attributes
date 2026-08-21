@@ -71,6 +71,9 @@ class FeatureValidationResult:
         message: Human-readable error message
         localizable_error: Translation key for localized error (e.g., 'error.400.feature_below_minimum')
         params: Parameters for the localizable error template
+        warnings: Non-blocking, informational findings (e.g. unknown config
+            keys silently dropped by the dataclass parser). Never flips
+            ``status``/``valid`` — a warning is not a validation failure.
     """
     slug: str
     status: ValidationStatus
@@ -80,6 +83,7 @@ class FeatureValidationResult:
     message: Optional[str] = None
     localizable_error: Optional[str] = None
     params: Optional[Dict[str, Any]] = field(default_factory=dict)
+    warnings: Optional[List[str]] = None
 
 
 class FeatureValidationResultSerializer(serializers.Serializer):
@@ -96,6 +100,9 @@ class FeatureValidationResultSerializer(serializers.Serializer):
     message = serializers.CharField(required=False, allow_null=True)
     localizable_error = serializers.CharField(required=False, allow_null=True)
     params = serializers.DictField(required=False, allow_null=True)
+    warnings = serializers.ListField(
+        child=serializers.CharField(), required=False, allow_null=True
+    )
 
 
 @dataclass

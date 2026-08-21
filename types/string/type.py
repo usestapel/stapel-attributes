@@ -25,6 +25,9 @@ class StringFeatureType(BaseFeatureType[StringConfig, StringDto, StringDao]):
         - options: list of allowed values (optional)
         - allowCustom: allow values not in options (default: true if no options)
         - prefix, postfix, placeholder: UI hints
+        - multiline: render as a textarea instead of a single-line input
+          (default: false). Rendering metadata only — does not change
+          validation semantics (minLength/maxLength/pattern still apply).
 
     DTO value: string
     DAO value: string + metadata

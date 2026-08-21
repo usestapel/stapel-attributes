@@ -123,6 +123,10 @@ def _string_form() -> List[FormField]:  # LN-T-string (no postfix1000; pattern i
         _f("string", "pattern", "text"),
         _f("string", "options", "string_options"),
         _f("string", "allowCustom", "checkbox", default=True),
+        # Rendering hint only (textarea vs single-line input) — not part of the
+        # legacy 1:1 port (LOGIC-NOTES §2 has no equivalent), added for the
+        # stapel-forms build's textarea-vs-input distinction.
+        _f("string", "multiline", "checkbox", default=False),
         _f("string", "prefix", "translatable_text", params={"placeholder": "$"}),
         _f("string", "postfix", "translatable_text", params={"placeholder": "m²"}),
         _f("string", "placeholder", "translatable_text"),

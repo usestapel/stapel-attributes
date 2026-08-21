@@ -19,6 +19,7 @@ class StringConfig:
     postfix: Optional[str] = None
     placeholder: Optional[str] = None
     translatable_options: bool = True  # If True, option values are translation keys
+    multiline: bool = False  # Rendering hint only: textarea vs single-line input; no validation impact
 
 
 class StringConfigSerializer(DictDataclassSerializer):

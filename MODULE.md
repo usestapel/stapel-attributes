@@ -240,6 +240,29 @@ of feature-def dicts (`{"slug", "config", "mandatory", ...}`), or a mapping
 Error codes surface as `ValidationErrorCode` + `ref_value` + a localizable
 `error.400.feature_*` key (`errors.ERROR_CODE_TO_KEY`).
 
+#### Unknown config keys — silently dropped, warned (not rejected)
+
+`parse_config` builds each type's typed config dataclass through a DRF
+`DataclassSerializer` (`DictDataclassSerializer`). DRF's default
+`to_internal_value` only reads the input keys it has a declared field for —
+an input key with no matching dataclass field is neither an error nor
+present in `validated_data`; it is just dropped. So a typo'd constraint
+(`{"type": "string", "minLenght": 5}`) does not fail — it silently becomes a
+config with no `minLength` at all.
+
+Rejecting this outright would mean swapping every type's config serializer
+for one with a strict/unknown-fields mode — a real change to the shared
+parse seam every type plugin goes through, not a point fix. Instead,
+`validate_configs_structured` does the cheap half: it diffs the raw config
+dict's keys against the target dataclass's field names and, when the config
+is otherwise valid, attaches a non-blocking `FeatureValidationResult.warnings`
+list (e.g. `["Unknown config key(s) ignored: minLenght"]`). A warning never
+flips `status`/`valid` to failed — the config *was* accepted, this only flags
+that part of the input was dead weight. `validate_dto_structured` and
+`validate_dao_structured` do not run this check (they parse configs already
+known-good from storage, not freshly authored ones) — it is scoped to the
+config-authoring path (category/attribute-schema editing).
+
 ### Translation keys
 
 - `get_translation_keys(config)` — per-feature keys (labels, prefixes, ...).

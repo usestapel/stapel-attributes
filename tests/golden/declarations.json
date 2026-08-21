@@ -387,6 +387,12 @@
         "name": "allowCustom"
       },
       {
+        "default": false,
+        "kind": "checkbox",
+        "label_key": "admin.attributes.form.string.multiline",
+        "name": "multiline"
+      },
+      {
         "kind": "translatable_text",
         "label_key": "admin.attributes.form.string.prefix",
         "name": "prefix",
