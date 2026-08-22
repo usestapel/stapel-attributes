@@ -10,7 +10,7 @@ Patch (pre-1.0: minor = breaking, patch = compatible). Bug fix, no schema
 change to the individual config/DTO/DAO components — only to the OpenAPI
 `discriminator.mapping` describing them.
 
-Filed by @stapel/categories-react (tasks/darom-storefront-design.md §13.7
+Filed by @stapel/categories-react (the storefront spec §13.7
 note 5): the `FeatureConfig`/`FeatureDto`/`FeatureDao` polymorphic OpenAPI
 schemas emitted a `discriminator.mapping` with a single bogus `"null"` entry
 instead of the ten type-slug entries. openapi-typescript consequently
