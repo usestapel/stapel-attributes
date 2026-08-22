@@ -4,6 +4,43 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.4.7] - 2026-08-22
+
+Patch (pre-1.0: minor = breaking, patch = compatible). Bug fix, no schema
+change to the individual config/DTO/DAO components — only to the OpenAPI
+`discriminator.mapping` describing them.
+
+Filed by @stapel/categories-react (tasks/darom-storefront-design.md §13.7
+note 5): the `FeatureConfig`/`FeatureDto`/`FeatureDao` polymorphic OpenAPI
+schemas emitted a `discriminator.mapping` with a single bogus `"null"` entry
+instead of the ten type-slug entries. openapi-typescript consequently
+stripped `type` from generated call-sites and re-added a synthetic,
+*wrong* one (e.g. `IntConfig` declaring `type: "IntConfig"` where the wire
+actually sends `"int"`), mangling every generated feature-config type.
+
+### Fixed
+- `serializers.py`'s `_get_proxy_serializer` now builds the
+  `PolymorphicProxySerializer` from an explicit `{slug: serializer_class}`
+  mapping instead of a bare list of serializer classes. drf-spectacular's
+  `PolymorphicProxySerializerExtension` has two modes: given a list, it
+  *infers* each `resource_type` by instantiating the sub-serializer and
+  calling `to_representation(None)` on its `type` field; given a dict, it
+  uses the keys verbatim. Our `type` field is a plain
+  `djangorestframework-dataclasses`-built `ChoiceField` (from
+  `Literal['int']` etc.), and DRF's `ChoiceField.to_representation`
+  short-circuits `None`/`''` input straight back to `None` — it never
+  consults the field's constant/default value. Every sub-serializer's
+  inferred `resource_type` was therefore the Python object `None`, and the
+  dict comprehension building `discriminator.mapping` collapsed all ten
+  entries into one `{None: <last schema>}`, serialized to JSON as the single
+  `"null"` key. Passing the mapping explicitly (we already had it —
+  `_build_mapping()` was already used for the runtime polymorphic
+  serializer) sidesteps the inference path entirely.
+- Added `tests/test_openapi_discriminator.py`: a contract test asserting the
+  `FeatureConfig`/`FeatureDto`/`FeatureDao` discriminator mappings are
+  slug-keyed, contain all ten registered type slugs, and never contain
+  `"null"`.
+
 ## [0.4.6] - 2026-08-21
 
 Additive-only. Patch (pre-1.0: minor = breaking, patch = compatible).

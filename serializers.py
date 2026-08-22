@@ -11,28 +11,13 @@ factories cache per registry version: registering a new type invalidates
 the cached classes, so late registrations are always reflected.
 """
 
-from typing import Dict, List, Tuple, Type
+from typing import Dict, Tuple, Type
 
 from rest_framework import serializers
 from drf_polymorphic.serializers import PolymorphicSerializer
 from drf_spectacular.utils import PolymorphicProxySerializer
 
 from stapel_attributes.registry import get_all_feature_types, get_all_type_slugs, registry_version
-
-
-def _get_config_serializers() -> List[Type[serializers.Serializer]]:
-    """Get list of all config serializer classes."""
-    return [ft.config_serializer_class for ft in get_all_feature_types()]
-
-
-def _get_dto_serializers() -> List[Type[serializers.Serializer]]:
-    """Get list of all DTO serializer classes."""
-    return [ft.dto_serializer_class for ft in get_all_feature_types()]
-
-
-def _get_dao_serializers() -> List[Type[serializers.Serializer]]:
-    """Get list of all DAO serializer classes."""
-    return [ft.dao_serializer_class for ft in get_all_feature_types()]
 
 
 def _build_mapping(kind: str) -> Dict[str, Type[serializers.Serializer]]:
@@ -137,10 +122,10 @@ def get_feature_dao_serializer_class() -> Type[PolymorphicSerializer]:
 # kind -> (registry_version, proxy serializer)
 _proxy_cache: Dict[str, Tuple[int, PolymorphicProxySerializer]] = {}
 
-_PROXY_COMPONENTS = {
-    'config': ('FeatureConfig', _get_config_serializers),
-    'dto': ('FeatureDto', _get_dto_serializers),
-    'dao': ('FeatureDao', _get_dao_serializers),
+_PROXY_COMPONENT_NAMES = {
+    'config': 'FeatureConfig',
+    'dto': 'FeatureDto',
+    'dao': 'FeatureDao',
 }
 
 
@@ -150,10 +135,24 @@ def _get_proxy_serializer(kind: str) -> PolymorphicProxySerializer:
     if cached is not None and cached[0] == version:
         return cached[1]
 
-    component_name, get_serializers = _PROXY_COMPONENTS[kind]
+    # Pass an explicit slug -> serializer-class mapping (not a bare list).
+    # drf-spectacular's PolymorphicProxySerializerExtension has two modes:
+    # given a list it tries to *infer* each resource_type by instantiating
+    # the sub-serializer and calling `to_representation(None)` on its `type`
+    # field. Our `type` field is a plain rest_framework_dataclasses-built
+    # ChoiceField (from `Literal['int']` etc.), and DRF's
+    # ChoiceField.to_representation short-circuits `None`/'' input straight
+    # back to `None` instead of resolving it through choice_strings_to_values
+    # — it never consults the field's default. Every sub-serializer's
+    # inferred resource_type is therefore the Python object `None`, and the
+    # dict comprehension `{resource_type: schema for ...}` collapses all ten
+    # entries into one `{None: <last schema>}` — serialized to JSON as the
+    # single bogus `"null"` key. Given an explicit dict, drf-spectacular
+    # uses our slugs verbatim as `discriminator.mapping` keys and skips the
+    # inference path entirely.
     proxy = PolymorphicProxySerializer(
-        component_name=component_name,
-        serializers=get_serializers(),
+        component_name=_PROXY_COMPONENT_NAMES[kind],
+        serializers=_build_mapping(kind),
         resource_type_field_name='type',
     )
     _proxy_cache[kind] = (version, proxy)

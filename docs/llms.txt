@@ -1,4 +1,4 @@
-# stapel-attributes 0.4.6
+# stapel-attributes 0.4.7
 
 Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, nine built-in types, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
