@@ -8,7 +8,9 @@
     {"select": "functions", "path": "profile_bridge.py"},
     {"select": "functions", "path": "widgets.py"},
     {"select": "functions", "path": "serializers.py"},
-    {"select": "functions", "path": "base.py"}
+    {"select": "functions", "path": "base.py"},
+    {"select": "functions", "path": "rules.py"},
+    {"select": "functions", "path": "vocabularies.py"}
   ],
 
   "surface": {
@@ -167,6 +169,39 @@
     "get_feature_dao_proxy_serializer": {
       "kind": "factory",
       "intent": "Same OpenAPI-schema proxy as get_feature_config_proxy_serializer, for the DAO layer — use it in @extend_schema wherever an endpoint returns stored feature DAO data."
+    },
+    "parse_rules": {
+      "kind": "gate_function",
+      "intent": "Parse a feature's raw `rules` into the closed grammar, raising FeatureValidationError(INVALID_RULES) on any deviation. Call this from the model clean()/save path that stores rules, so a malformed rule is rejected where it is authored instead of surfacing later as a rule that silently never matches.",
+      "instead_of": ["ad hoc dict-shape checks over a rules JSON field"]
+    },
+    "evaluate_rules": {
+      "kind": "factory",
+      "intent": "The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half.",
+      "instead_of": ["reading FeatureDef.mandatory as if it were the whole requiredness answer"]
+    },
+    "narrow_config": {
+      "kind": "factory",
+      "intent": "Apply a RuleState to a raw config dict type-agnostically (drop forbidden options, replace a declared min/max) before parse_config. This is how rules reach the type plugins without any type knowing rules exist — use it rather than teaching a type about rules or inventing per-type error codes for conditional constraints.",
+      "instead_of": ["per-type conditional logic branching on another feature's value"]
+    },
+    "stringify": {
+      "kind": "factory",
+      "intent": "Canonicalize any submitted value (bool, number, string, list, DTO envelope) into the list of strings a rule compares against — the exact table the TypeScript evaluator mirrors. Use it anywhere a feature value must be compared as text, so False, 0 and 2.5 read identically on both sides of the wire.",
+      "instead_of": ["str(value) when comparing a feature value against option codes"]
+    },
+    "rule_warnings": {
+      "kind": "factory",
+      "intent": "Non-blocking findings for a parsed rule set: controlling slugs that no feature in the owning set defines. Feed it the category's whole slug set when saving a feature tree — an unknown controlling slug is legal (it reads as empty) but is almost always a typo worth surfacing."
+    },
+    "register_vocabulary_resolver": {
+      "kind": "factory",
+      "intent": "Register the process-wide VocabularyResolver the ref-types validate term codes against — the fork-free way an app hosting vocabularies in-process (AppConfig.ready()) plugs its own source in, winning over the STAPEL_ATTRIBUTES['VOCABULARY_RESOLVER'] dotted path.",
+      "instead_of": ["inlining thousands of vocabulary terms into a category's feature config"]
+    },
+    "get_vocabulary_resolver": {
+      "kind": "factory",
+      "intent": "The effective vocabulary resolver (runtime registration, else the configured dotted path, else None). Ask through this rather than importing a concrete resolver, so a service that resolves over comm and one that resolves over the ORM run the same type code."
     },
     "dataclass_to_dict_no_none": {
       "kind": "factory",

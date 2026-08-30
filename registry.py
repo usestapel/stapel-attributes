@@ -2,7 +2,7 @@
 
 Central registry for all feature types, with the house merge semantics:
 
-1. **Built-ins** — the nine generic types shipped in ``stapel_attributes.types``,
+1. **Built-ins** — the twelve generic types shipped in ``stapel_attributes.types``,
    registered on first registry access;
 2. **``STAPEL_ATTRIBUTES["EXTRA_TYPES"]``** — a list of dotted paths, merged
    over the built-ins and imported lazily. Each entry is either a

@@ -23,6 +23,7 @@ __all__ = [
     "DaoMeta",
     "DictDataclassSerializer",
     "FeatureDef",
+    "ValidationContext",
     "dataclass_to_dict_no_none",
     # Structured errors & results
     "FeatureValidationError",
@@ -58,6 +59,22 @@ __all__ = [
     "validate_configs_structured",
     "validate_dao_structured",
     "validate_description",
+    # Conditional rules (closed grammar, shared corpus with the TS evaluator)
+    "Cond",
+    "Rule",
+    "RuleState",
+    "When",
+    "evaluate_rules",
+    "narrow_config",
+    "parse_rules",
+    "rule_warnings",
+    "stringify",
+    # Vocabulary resolver seam (ref_select / ref_hierarchical_select)
+    "VocabularyInfo",
+    "VocabularyLevel",
+    "VocabularyResolver",
+    "get_vocabulary_resolver",
+    "register_vocabulary_resolver",
     # Config-form contract (schema-driven admin UI)
     "FIELD_KINDS",
     "FormField",
@@ -85,6 +102,7 @@ _LAZY_EXPORTS = {
     "DaoMeta": ".base",
     "DictDataclassSerializer": ".base",
     "FeatureDef": ".base",
+    "ValidationContext": ".base",
     "dataclass_to_dict_no_none": ".base",
     # errors & results
     "FeatureValidationError": ".exceptions",
@@ -119,6 +137,22 @@ _LAZY_EXPORTS = {
     "validate_configs_structured": ".validation",
     "validate_dao_structured": ".validation",
     "validate_description": ".validation",
+    # conditional rules
+    "Cond": ".rules",
+    "Rule": ".rules",
+    "RuleState": ".rules",
+    "When": ".rules",
+    "evaluate_rules": ".rules",
+    "narrow_config": ".rules",
+    "parse_rules": ".rules",
+    "rule_warnings": ".rules",
+    "stringify": ".rules",
+    # vocabulary resolver seam
+    "VocabularyInfo": ".vocabularies",
+    "VocabularyLevel": ".vocabularies",
+    "VocabularyResolver": ".vocabularies",
+    "get_vocabulary_resolver": ".vocabularies",
+    "register_vocabulary_resolver": ".vocabularies",
     # config-form contract
     "FIELD_KINDS": ".config_form",
     "FormField": ".config_form",

@@ -1,7 +1,7 @@
 {
   "module": "stapel-attributes",
-  "version": "0.4.7",
-  "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, nine built-in types, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
+  "version": "0.5.0",
+  "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, twelve built-in types (two of them vocabulary-backed), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
   "axes": [
     {
       "key": "EXTRA_TYPES",
@@ -13,7 +13,7 @@
         "co_gates": []
       },
       "curated": {
-        "summary": "MERGE (additive over the nine built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).",
+        "summary": "MERGE (additive over the twelve built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).",
         "business_label": "Extra attribute (feature) types available to categories/listings"
       }
     }
@@ -23,6 +23,11 @@
       "name": "EXTRA_TYPES",
       "kind": "dotted_path_list",
       "summary": "Open, merge-over-builtins type registry (register_feature_type / registered_types / get_feature_type in registry.py); the flagship open seam this library exposes — no fork needed to add a domain-specific attribute type (MODULE.md 'What this library provides', 'Extension points')."
+    },
+    {
+      "name": "VOCABULARY_RESOLVER",
+      "kind": "dotted_path",
+      "summary": "The source ref_select / ref_hierarchical_select validate term codes against: a dotted path resolved lazily, or a runtime register_vocabulary_resolver() that wins over it. The protocol lives here, every implementation outside (MODULE.md 'Vocabulary resolver seam')."
     },
     {
       "name": "ADMIN_WIDGETS",
@@ -186,6 +191,48 @@
       "intent": "Normalize AND validate an incoming DTO dict against its config in one call, raising FeatureValidationError on failure. Call this at any boundary that accepts a raw {type, value, ...} payload from a client, instead of normalizing and validating as two separately-forgettable steps."
     },
     {
+      "name": "evaluate_rules",
+      "kind": "factory",
+      "path": "stapel_attributes.rules.evaluate_rules",
+      "intent": "The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half.",
+      "instead_of": [
+        "reading FeatureDef.mandatory as if it were the whole requiredness answer"
+      ]
+    },
+    {
+      "name": "narrow_config",
+      "kind": "factory",
+      "path": "stapel_attributes.rules.narrow_config",
+      "intent": "Apply a RuleState to a raw config dict type-agnostically (drop forbidden options, replace a declared min/max) before parse_config. This is how rules reach the type plugins without any type knowing rules exist — use it rather than teaching a type about rules or inventing per-type error codes for conditional constraints.",
+      "instead_of": [
+        "per-type conditional logic branching on another feature's value"
+      ]
+    },
+    {
+      "name": "parse_rules",
+      "kind": "gate_function",
+      "path": "stapel_attributes.rules.parse_rules",
+      "intent": "Parse a feature's raw `rules` into the closed grammar, raising FeatureValidationError(INVALID_RULES) on any deviation. Call this from the model clean()/save path that stores rules, so a malformed rule is rejected where it is authored instead of surfacing later as a rule that silently never matches.",
+      "instead_of": [
+        "ad hoc dict-shape checks over a rules JSON field"
+      ]
+    },
+    {
+      "name": "rule_warnings",
+      "kind": "factory",
+      "path": "stapel_attributes.rules.rule_warnings",
+      "intent": "Non-blocking findings for a parsed rule set: controlling slugs that no feature in the owning set defines. Feed it the category's whole slug set when saving a feature tree — an unknown controlling slug is legal (it reads as empty) but is almost always a typo worth surfacing."
+    },
+    {
+      "name": "stringify",
+      "kind": "factory",
+      "path": "stapel_attributes.rules.stringify",
+      "intent": "Canonicalize any submitted value (bool, number, string, list, DTO envelope) into the list of strings a rule compares against — the exact table the TypeScript evaluator mirrors. Use it anywhere a feature value must be compared as text, so False, 0 and 2.5 read identically on both sides of the wire.",
+      "instead_of": [
+        "str(value) when comparing a feature value against option codes"
+      ]
+    },
+    {
       "name": "get_feature_config_proxy_serializer",
       "kind": "factory",
       "path": "stapel_attributes.serializers.get_feature_config_proxy_serializer",
@@ -299,6 +346,21 @@
       "kind": "gate_function",
       "path": "stapel_attributes.validation.validate_dto_structured",
       "intent": "Same DTO validation as validate_dto, but returns a ValidationBatchResult (one FeatureValidationResult per feature, with machine error codes) instead of raising — the one to call from a DRF view/serializer that needs a structured, per-field API error response rather than a single Django exception."
+    },
+    {
+      "name": "get_vocabulary_resolver",
+      "kind": "factory",
+      "path": "stapel_attributes.vocabularies.get_vocabulary_resolver",
+      "intent": "The effective vocabulary resolver (runtime registration, else the configured dotted path, else None). Ask through this rather than importing a concrete resolver, so a service that resolves over comm and one that resolves over the ORM run the same type code."
+    },
+    {
+      "name": "register_vocabulary_resolver",
+      "kind": "factory",
+      "path": "stapel_attributes.vocabularies.register_vocabulary_resolver",
+      "intent": "Register the process-wide VocabularyResolver the ref-types validate term codes against — the fork-free way an app hosting vocabularies in-process (AppConfig.ready()) plugs its own source in, winning over the STAPEL_ATTRIBUTES['VOCABULARY_RESOLVER'] dotted path.",
+      "instead_of": [
+        "inlining thousands of vocabulary terms into a category's feature config"
+      ]
     },
     {
       "name": "get_config_editor_widget",

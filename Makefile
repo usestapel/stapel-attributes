@@ -20,9 +20,10 @@ PYTHON ?= python3
 # Patch `surface` (+ module/version) into docs/capabilities.json, then emit
 # docs/llms.txt from the result.
 #
-# --budget 4500: the 36-entry surface (this L1 library IS almost entirely
-# surface — see docs/capabilities.meta.json's _comment) runs ~95 tokens over
-# the generator's default 4000-token ceiling. The owner's call: raise the
+# --budget 5200: the 43-entry surface (this L1 library IS almost entirely
+# surface — see docs/capabilities.meta.json's _comment) runs over the
+# generator's default 4000-token ceiling; 0.5.0's rules + vocabulary seams
+# added seven more entries. The owner's call, taken twice now: raise the
 # ceiling, do NOT shorten intent/instead_of lines to fit — a trimmed-to-fit
 # context file reads exactly like a complete one, which is the failure mode
 # the hard-budget gate exists to prevent (see stapel-auth/Makefile for the
@@ -38,14 +39,14 @@ PYTHON ?= python3
 # printing 0.
 contract:
 	$(PYTHON) -m stapel_tools.surface . --patch
-	$(PYTHON) -m stapel_tools.llms_txt . --budget 4500
+	$(PYTHON) -m stapel_tools.llms_txt . --budget 5200
 	$(PYTHON) -m stapel_tools.readme .
 
 # Drift gate: regenerate into a temp dir and diff against the committed docs/*.
 contract-check:
 	$(PYTHON) -m stapel_tools.surface . --patch --check
 	@tmp=$$(mktemp -d); \
-	$(PYTHON) -m stapel_tools.llms_txt . --out "$$tmp" --budget 4500 || { rm -rf "$$tmp"; exit 1; }; \
+	$(PYTHON) -m stapel_tools.llms_txt . --out "$$tmp" --budget 5200 || { rm -rf "$$tmp"; exit 1; }; \
 	if ! diff -q docs/llms.txt "$$tmp/llms.txt" >/dev/null 2>&1; then \
 		echo "DRIFT: docs/llms.txt is stale — run 'make contract' and commit it"; \
 		diff docs/llms.txt "$$tmp/llms.txt" | head -20; \

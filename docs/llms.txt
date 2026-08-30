@@ -1,18 +1,21 @@
-# stapel-attributes 0.4.7
+# stapel-attributes 0.5.0
 
-Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, nine built-in types, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
+Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, twelve built-in types (two of them vocabulary-backed), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
-Contract: axes 1 · surface 36 · extension points 4.
+Contract: axes 1 · surface 43 · extension points 5.
 Generated from docs/capabilities.json by `stapel-llms-txt` — do not edit; drift-gated by `make contract-check`.
 
 ## Configuration axes — what a product switches on
 Settings keys; `default` is what you get by saying nothing. Turning an axis off unmounts the operations it gates.
 - EXTRA_TYPES [list, default []] — Extra attribute (feature) types available to categories/listings
-  MERGE (additive over the nine built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).
+  MERGE (additive over the twelve built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).
 
 ## Usage surface — call these before writing your own
 This is the answer to "does Stapel already have something for X?". `instead of` names the outside symbol this one displaces.
 ### gate_function
+- parse_rules — stapel_attributes.rules.parse_rules
+  instead of: ad hoc dict-shape checks over a rules JSON field
+  Parse a feature's raw `rules` into the closed grammar, raising FeatureValidationError(INVALID_RULES) on any deviation. Call this from the model clean()/save path that stores rules, so a malformed rule is rejected where it is authored instead of surfacing later as a rule that silently never matches.
 - validate_configs_structured — stapel_attributes.validation.validate_configs_structured
   Validate every feature's own CONFIG (not the submitted values) — call this when saving the owning entity itself (e.g. a category's feature tree) to catch a broken config (min > max, empty options, ...) before any listing ever submits a value against it.
 - validate_dao_structured — stapel_attributes.validation.validate_dao_structured
@@ -46,6 +49,9 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   Recursively convert a (possibly nested) dataclass into a dict with None-valued fields dropped — the shape every DAO/config must serialize to for storage and API output. Use this instead of dataclasses.asdict(), which keeps None keys and doesn't match the None-omission convention every type plugin here relies on.
 - dto_to_dao — stapel_attributes.registry.dto_to_dao
   Convert an already-validated typed DTO into its typed DAO, threading through config-derived metadata (name/order/title/badge/translate) from the owning FeatureDef. Use this rather than hand-copying DTO fields into a storage dict — the metadata threading is the part that is easy to forget.
+- evaluate_rules — stapel_attributes.rules.evaluate_rules
+  instead of: reading FeatureDef.mandatory as if it were the whole requiredness answer
+  The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half.
 - field_kind_for — stapel_attributes.profile_bridge.field_kind_for
   instead of: re-deriving the ProfileFieldKind -> FIELD_KINDS mapping per projection
   Map a stapel-profiles ProfileFieldKind value to the matching config_form.FIELD_KINDS key — the one lookup a shop/classified projection needs when it builds a filterable attribute FROM a profile field, so the mapping is defined once instead of re-derived (or duplicated) per projection.
@@ -86,6 +92,11 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
 - get_feature_type — stapel_attributes.registry.get_feature_type
   instead of: a hand-rolled dict of type slug -> handler class
   Look up one feature type instance by its config 'type' slug, raising ValueError with the full available list on an unknown slug. This is the one lookup every consumer (categories' admin.py, listings) uses instead of hardcoding a slug->class dict.
+- get_vocabulary_resolver — stapel_attributes.vocabularies.get_vocabulary_resolver
+  The effective vocabulary resolver (runtime registration, else the configured dotted path, else None). Ask through this rather than importing a concrete resolver, so a service that resolves over comm and one that resolves over the ORM run the same type code.
+- narrow_config — stapel_attributes.rules.narrow_config
+  instead of: per-type conditional logic branching on another feature's value
+  Apply a RuleState to a raw config dict type-agnostically (drop forbidden options, replace a declared min/max) before parse_config. This is how rules reach the type plugins without any type knowing rules exist — use it rather than teaching a type about rules or inventing per-type error codes for conditional constraints.
 - normalize_feature_dto — stapel_attributes.registry.normalize_feature_dto
   Run only the type's own DTO normalization (dict -> typed dataclass) without the validation step — for callers that need the normalized shape but will validate separately or have already validated.
 - normalize_to_dao — stapel_attributes.validation.normalize_to_dao
@@ -99,10 +110,18 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
 - register_feature_type — stapel_attributes.registry.register_feature_type
   instead of: a bespoke if/elif type-dispatch chain in place of the open registry
   Register a custom BaseFeatureType (decorator or direct call) from a host AppConfig.ready() to add a domain-specific attribute type without forking the registry — the fork-free way in, alternative to declaring EXTRA_TYPES when the type class already lives in the calling module.
+- register_vocabulary_resolver — stapel_attributes.vocabularies.register_vocabulary_resolver
+  instead of: inlining thousands of vocabulary terms into a category's feature config
+  Register the process-wide VocabularyResolver the ref-types validate term codes against — the fork-free way an app hosting vocabularies in-process (AppConfig.ready()) plugs its own source in, winning over the STAPEL_ATTRIBUTES['VOCABULARY_RESOLVER'] dotted path.
 - registered_types — stapel_attributes.registry.registered_types
   The full effective slug -> feature-type-instance mapping (built-ins <- EXTRA_TYPES <- runtime, later wins). Reach for this, not a hand-maintained dict, whenever you need to iterate every currently-registered type (form_declarations() is the reference caller).
 - registry_version — stapel_attributes.registry.registry_version
   Monotonic counter bumped on every (re-)registration — use it as a cache key when you memoize anything derived from the effective type set (the serializer factories in serializers.py do exactly this), so a late EXTRA_TYPES/runtime registration is never served a stale cache.
+- rule_warnings — stapel_attributes.rules.rule_warnings
+  Non-blocking findings for a parsed rule set: controlling slugs that no feature in the owning set defines. Feed it the category's whole slug set when saving a feature tree — an unknown controlling slug is legal (it reads as empty) but is almost always a typo worth surfacing.
+- stringify — stapel_attributes.rules.stringify
+  instead of: str(value) when comparing a feature value against option codes
+  Canonicalize any submitted value (bool, number, string, list, DTO envelope) into the list of strings a rule compares against — the exact table the TypeScript evaluator mirrors. Use it anywhere a feature value must be compared as text, so False, 0 and 2.5 read identically on both sides of the wire.
 
 ## Extension points — what a product replaces, fork-free
 - ADMIN_EXTRA_CSS / ADMIN_EXTRA_JS [asset_list]
@@ -113,6 +132,8 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   Swap ConfigEditorWidget behaviour per type via STAPEL_ATTRIBUTES['ADMIN_WIDGETS'] (dotted-path merge) (MODULE.md 'Admin seams').
 - EXTRA_TYPES [dotted_path_list]
   Open, merge-over-builtins type registry (register_feature_type / registered_types / get_feature_type in registry.py); the flagship open seam this library exposes — no fork needed to add a domain-specific attribute type (MODULE.md 'What this library provides', 'Extension points').
+- VOCABULARY_RESOLVER [dotted_path]
+  The source ref_select / ref_hierarchical_select validate term codes against: a dotted path resolved lazily, or a runtime register_vocabulary_resolver() that wins over it. The protocol lives here, every implementation outside (MODULE.md 'Vocabulary resolver seam').
 
 ## Fits with — fleet dependencies
 - stapel-core (required) — AppSettings config layer, error registry — the only stapel-* dependency (pyproject.toml dependency; conf.py:8, errors.py:9)

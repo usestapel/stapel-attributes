@@ -14,11 +14,14 @@ catalog's `categories/feature_types` engine + the `ads` value-validation pipelin
 
 | Area | Contents |
 |---|---|
-| Engine core (`base.py`) | `BaseFeatureType[TConfig, TDto, TDao]` — the type-plugin ABC; `DictDataclassSerializer` (dataclass serializer returning dicts, drf-polymorphic-compatible); `DaoMeta` (shared DAO metadata: name/order/title/badge/translate); `FeatureDef` — the plain feature-definition structure the engine operates on (slug, config, id, name, mandatory, display flags) |
+| Engine core (`base.py`) | `BaseFeatureType[TConfig, TDto, TDao]` — the type-plugin ABC; `DictDataclassSerializer` (dataclass serializer returning dicts, drf-polymorphic-compatible); `DaoMeta` (shared DAO metadata: name/order/title/badge/translate); `FeatureDef` — the plain feature-definition structure the engine operates on (slug, config, id, name, mandatory, display flags, `rules`, and the form metadata `description`/`example`/`default`/`hints`/`group`); `ValidationContext` — the sibling-values envelope for `validate_dto_in_context` |
 | Type registry (`registry.py`) | Open registry (`register_feature_type`, `registered_types`, `get_feature_type`, `get_all_type_slugs`); parse/convert helpers (`parse_config`, `parse_dto`, `dao_to_dict`, `dto_to_dao`, `normalize_feature_dto`, `validate_feature_config`, `validate_feature_dto`, `format_feature_value`, `get_default_value`); translation-key helpers |
-| Built-in types (`types/`) | `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`, `hierarchical_select`, `convertible_unit` — each a plugin directory of `config.py` / `dto.py` / `dao.py` / `type.py` |
+| Built-in types (`types/`) | `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`, `hierarchical_select`, `convertible_unit`, `ref_select`, `ref_hierarchical_select` — each a plugin directory of `config.py` / `dto.py` / `dao.py` / `type.py` |
 | Polymorphic serializers (`serializers.py`) | Factories for `FeatureConfig`/`FeatureDto`/`FeatureDao` polymorphic serializers (drf-polymorphic, `type` discriminator) + `PolymorphicProxySerializer`s for OpenAPI (drf-spectacular); caches keyed on the registry version, so late registrations are always reflected |
 | Validation pipeline (`validation.py`) | `validate_dto(configs, dto)` (raise-style), `normalize_to_dao(configs, dto)` (DTO→DAO with header injection and ordering), `validate_dto_structured` / `validate_configs_structured` / `validate_dao_structured` (batch results), `validate_description`; `coerce_feature_defs` accepts FeatureDef lists, dicts, or `{slug: config}` mappings |
+| Conditional rules (`rules.py`) | The closed rule grammar (`parse_rules`, `Rule`/`Cond`/`When`), value canonicalization (`stringify`), the single-pass evaluator (`evaluate_rules` -> `RuleState`), the type-agnostic `narrow_config`, and `rule_warnings`. Django-free at import; mirrored in TypeScript against one shared corpus |
+| Vocabulary seam (`vocabularies.py`) | `VocabularyResolver` protocol + `VocabularyInfo`/`VocabularyLevel` and the registry (`register_vocabulary_resolver`, `get_vocabulary_resolver`). The protocol only — every implementation lives outside this library |
+| Canonical schema (`docs/feature-def.schema.json`) | JSON Schema 2020-12 for `FeatureDef` (+ `$defs.Rule`/`Cond`/`Hint`/`OptionsRef`/the two ref configs) — one source, several emitters; gated against the dataclass by `tests/test_feature_def_schema.py` |
 | Structured errors (`results.py`, `exceptions.py`, `errors.py`) | `ValidationErrorCode` vocabulary, `FeatureValidationResult`/`ValidationBatchResult` (+ serializers), `FeatureValidationError` (a Django `ValidationError` carrying `error_code`/`ref_value`/`error_params`), localizable `error.400.feature_*` keys registered with stapel-core |
 
 Public API: `stapel_attributes.__all__` (PEP 562 lazy — `import
@@ -57,12 +60,13 @@ call time; caches invalidate on `setting_changed`.
 | Key | Default | Semantics | What it customizes |
 |---|---|---|---|
 | `EXTRA_TYPES` | `[]` | **MERGE** (additive over built-ins) | List of dotted paths loaded lazily on first registry access. Each entry is either a `BaseFeatureType` subclass (registered directly) or a module whose import registers types via `@register_feature_type`. A broken entry raises `ImportError` with the offending path. Loading is additive and idempotent — entries cannot remove built-ins. |
+| `VOCABULARY_RESOLVER` | `None` | **REPLACE** (a runtime registration wins) | Dotted path to the `VocabularyResolver` the ref-types validate term codes against; a class is instantiated on first use. See "Vocabulary resolver seam" below. |
 
 ### The type registry — open registry with MERGE semantics (flagship seam)
 
 Three layers, later wins per slug:
 
-1. built-ins (`stapel_attributes.types` — the nine generic types);
+1. built-ins (`stapel_attributes.types` — the twelve generic types);
 2. `STAPEL_ATTRIBUTES["EXTRA_TYPES"]` — merged over the built-ins;
 3. runtime `register_feature_type(cls)` — e.g. from a host app's
    `AppConfig.ready()`; re-registering a slug overrides it.
@@ -221,6 +225,98 @@ note above.
   blocks adding one later (`registerValueEditor`/`registerConfigWidget`, see
   the Admin UI section below).
 
+### Conditional rules (`rules.py`) — closed grammar, single pass
+
+`FeatureDef.rules` is a **sibling of `mandatory`, never part of `config`**: a
+rule is type-independent, while `config` goes through a strict per-type
+serializer. The grammar is closed so both evaluators (this module and
+attributes-react's `evaluateRules`) can be proven equal against one corpus:
+
+```
+Rule := { effect: require|show|hide|forbid_option|limit,
+          when:   { all: [Cond, …≥1] } | { any: [Cond, …≥1] },   # exactly one key
+          option?: str,          # forbid_option only, required there
+          min?: num, max?: num } # limit only, at least one
+Cond := { feature: slug, op: in|not_in, values: [str, …≥1] }
+      | { feature: slug, op: filled|empty }
+```
+
+Anything else is `FeatureValidationError(INVALID_RULES)` at config-validation
+time (`error.400.feature_invalid_rules`). An unknown controlling slug is **not**
+an error — the same feature is reused in categories with different field sets,
+so it simply reads as `empty`; `validate_configs_structured(configs,
+known_slugs=...)` reports it as a non-blocking warning.
+
+- **One pass, no fixed point.** `evaluate_rules(feature_defs, values)` reads the
+  raw submitted values once. A controlling feature's own visibility is not
+  consulted, so rule cycles are impossible by construction.
+- **Comparison is on strings.** `stringify(value)` is the exact shared table
+  (`False` -> `['false']` — a false bool is *filled*; a non-integral number ->
+  its shortest decimal, never an exponent; a `{type, value}` DTO envelope is
+  unwrapped). Both languages compare the same strings.
+- **Rules reach types through the config, not through the types.**
+  `narrow_config(config_dict, state)` drops forbidden options and replaces a
+  *declared* `min`/`max`; the narrowed config then goes down the ordinary
+  `parse_config` -> `validate_dto` path. So a forbidden option comes back as
+  `not_in_options` and a tightened bound as `above_maximum` — **no new error
+  codes for values, and every host type gets rules for free.** Narrowing never
+  *introduces* a bound the config did not declare.
+- **Requiredness is `RuleState.required`**, not `FeatureDef.mandatory`:
+  `visible and (mandatory or any matching require)`. A hidden feature is never
+  required, is not validated, and is dropped from the DAO even if a value was
+  submitted. `header` is always visible and never required.
+
+The shared corpus lives in `tests/golden/rules/{cases,pipeline}/` (record with
+`GOLDEN_RECORD=1`); `tests/golden/rules/avito/` is filled by the importer.
+
+### Vocabulary resolver seam (`vocabularies.py`)
+
+`ref_select` / `ref_hierarchical_select` point at an **external** vocabulary
+(`optionsRef = {vocabulary, level, parentFeature?}`) because the vocabularies
+they exist for have thousands of terms per level — inlining options into a
+category schema is not an option. This library declares only the protocol:
+
+```python
+class VocabularyResolver(Protocol):
+    def describe(self, vocabulary) -> VocabularyInfo | None
+    def exists(self, vocabulary, level, code) -> bool
+    def is_child(self, vocabulary, level, code, parent_level, parent_code) -> bool
+    def labels(self, vocabulary, level, codes) -> dict[str, str]
+```
+
+Two ways in, later wins: `STAPEL_ATTRIBUTES["VOCABULARY_RESOLVER"]` (dotted
+path, resolved lazily; a class is instantiated once) and a runtime
+`register_vocabulary_resolver(resolver)` from an `AppConfig.ready()`. **With no
+resolver a ref-type CONFIG is loudly invalid** (`INVALID_CONFIG`, "no vocabulary
+resolver registered") — at authoring time, not on the first submitted value.
+Parsing a stored config never needs a resolver.
+
+### The two ref-types
+
+| | `ref_select` | `ref_hierarchical_select` |
+|---|---|---|
+| Config | `optionsRef{vocabulary, level, parentFeature?}`, `minSelected`, `maxSelected` (default 1), `uiStyle` | `vocabulary`, `levels` (root→leaf parent chain), `minDepth`, `maxDepth` |
+| DTO | `{type, value: [code, …]}` | `{type, value: [code, …]}` — the path |
+| DAO | codes + `labels` snapshot + `vocabulary`/`level` | codes + `labels` + `vocabulary`/`levels` |
+
+- Codes are checked with `exists`; a filled `parentFeature` narrows the level to
+  that term's children via `is_child` (violation -> `NOT_IN_OPTIONS`). An
+  **empty** parent allows the whole level on purpose, so a form validates
+  without forcing a fill order.
+- `dto_to_dao` snapshots `labels` (unknown code labels as itself) so rendering a
+  stored listing never reads the vocabulary; `format_value` uses only the DAO.
+- `get_translation_keys()` is `[]`: term labels are owned by the vocabulary,
+  not by the category schema.
+- Facets read `value` (the codes), exactly as for `select`.
+
+### `validate_dto_in_context` — the sibling-values hook
+
+The pipeline calls `BaseFeatureType.validate_dto_in_context(config, dto,
+ValidationContext(values, feature_defs))`, whose default simply delegates to
+`validate_dto` — every existing type notices nothing. Override it only when
+validity genuinely depends on another field; `ref_select`'s parent narrowing is
+the reference (and, so far, only) case.
+
 ### Validation API (what modules call)
 
 All functions take `configs` first — any of: a list of `FeatureDef`s, a list
@@ -289,7 +385,7 @@ renders the form from that declaration — **a new type using only the standard
 field-kinds gets an admin form with zero JS.**
 
 **Field-kind dictionary** (`config_form.FIELD_KINDS`, minimally sufficient for the
-nine built-ins): `number`, `text`, `checkbox`, `translatable_text`,
+eleven built-ins that declare a form): `number`, `text`, `checkbox`, `translatable_text`,
 `number_options`, `string_options`, `color_options`, `select`,
 `select_options_with_default`, `max_selected_dropdown`, `hierarchical_options`,
 `timestamp`, `timestamp_array`. Validation stays Python-side (declarations +
@@ -299,15 +395,18 @@ structured errors); the JS mirrors only UX validation.
 progressive-enhancement `<textarea>` (works with no JS) + a mount point + the
 declarations/config/locale/messages via `json_script`; an inline ES-module
 imports the bundle and mounts `<stapel-config-editor>`. Value editors for the
-nine types (`bool`, `string`/`int`/`float`, `select`, `date`, `hex_color`,
-`hierarchical_select`, `header`) render a DTO from a config; unknown types fall
-back to `UnsupportedEditor`.
+nine legacy-ported types (`bool`, `string`/`int`/`float`, `select`, `date`,
+`hex_color`, `hierarchical_select`, `header`) render a DTO from a config;
+unknown types — including the two ref-types, whose editor is a typeahead over
+an HTTP vocabulary and therefore lives in attributes-react — fall back to
+`UnsupportedEditor`.
 
 ### Admin seams (fork-free)
 
 | Customize | Seam |
 |---|---|
 | Config form of a new type | `config_form()` field-kind declaration (zero JS for standard kinds) |
+| Where a ref-type's terms come from | `STAPEL_ATTRIBUTES["VOCABULARY_RESOLVER"]` or `register_vocabulary_resolver()` |
 | Exotic UI for a kind/type | JS registries: `window.StapelAttributes.registerConfigWidget(kind, factory)` / `registerValueEditor(type, factory)` — MERGE over built-ins |
 | Look & feel | `--stapel-*` CSS vars (light + `[data-theme="dark"]`); `STAPEL_ATTRIBUTES["ADMIN_EXTRA_CSS"/"ADMIN_EXTRA_JS"]` |
 | Widget behaviour | subclass `ConfigEditorWidget`, or swap via `STAPEL_ATTRIBUTES["ADMIN_WIDGETS"]` (dotted-path merge) |
@@ -373,6 +472,12 @@ the **error-code contract**: `tests/golden/error_codes.json` (generated from the
 mirror `static_src/src/error-codes.ts` — a code added on one side but not the
 other turns a test red.
 
+The rule engine has its own corpus under `tests/golden/rules/` on the same
+contract: `cases/` pins `evaluate_rules` semantics (every effect, operator and
+connective plus the whole `stringify` table) and `pipeline/` pins the
+end-to-end effect through `validate_dto_structured` + `normalize_to_dao`.
+attributes-react runs a generated copy of both.
+
 **Pattern contract**: a string `pattern` matches the **whole** value
 (`re.fullmatch` / `^(?:…)$`) and is a JS-RegExp-compatible subset. String
 length is counted in Unicode **code points** on both sides.
@@ -403,6 +508,13 @@ this library's. Nothing to decorate.
 - **Don't bypass the settings namespace** with `os.getenv` at import time.
 - **Don't cache polymorphic serializer classes at import time** — always go
   through the factories (they version-track the registry).
+- **Don't extend the rule grammar locally** — it is closed so two evaluators
+  can be proven equal. A rule that needs nesting or arithmetic is a design
+  question, not a config.
+- **Don't read `FeatureDef.mandatory` as the whole answer** — with rules in
+  play, requiredness is `evaluate_rules(...)[slug].required`.
+- **Don't inline a vocabulary into a config** — that is exactly what the
+  ref-types and the resolver seam exist to avoid.
 
 ## App-layer override vs upstream contribution — rule of thumb
 
@@ -414,7 +526,9 @@ feature types (settings or runtime), custom translation keys via
 **Upstream contribution**: new hooks on `BaseFeatureType`, new
 `ValidationErrorCode`s, changes to pipeline semantics (header injection,
 ordering, empty-value policy), new generic (non-vertical) built-in types,
-removal semantics for `EXTRA_TYPES`.
+removal semantics for `EXTRA_TYPES`, **anything about the rule grammar** (it is
+closed on both sides of the wire — a new effect or operator is a two-language
+change plus corpus, never a local extension).
 
 Litmus test: if you'd have to monkeypatch or edit code inside
 `stapel_attributes/` — it's upstream. If a setting, a registered type or a

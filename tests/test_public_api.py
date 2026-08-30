@@ -16,6 +16,7 @@ class TestLazyExports:
             "DaoMeta",
             "DictDataclassSerializer",
             "FeatureDef",
+            "ValidationContext",
             "dataclass_to_dict_no_none",
             # Structured errors & results
             "FeatureValidationError",
@@ -51,6 +52,22 @@ class TestLazyExports:
             "validate_configs_structured",
             "validate_dao_structured",
             "validate_description",
+            # Conditional rules (closed grammar, shared corpus with the TS evaluator)
+            "Cond",
+            "Rule",
+            "RuleState",
+            "When",
+            "evaluate_rules",
+            "narrow_config",
+            "parse_rules",
+            "rule_warnings",
+            "stringify",
+            # Vocabulary resolver seam (ref_select / ref_hierarchical_select)
+            "VocabularyInfo",
+            "VocabularyLevel",
+            "VocabularyResolver",
+            "get_vocabulary_resolver",
+            "register_vocabulary_resolver",
             # Config-form contract (schema-driven admin UI)
             "FIELD_KINDS",
             "FormField",

@@ -4,6 +4,108 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.5.0] - 2026-08-30
+
+**Minor = breaking** (pre-1.0). Slice S1 of the attributes-v2 architecture:
+conditional rules, form metadata on `FeatureDef`, the vocabulary resolver seam
+and the two vocabulary-backed types, plus `docs/feature-def.schema.json` as the
+canonical shape of a feature definition.
+
+Nothing changes for a schema that carries no `rules`: the rule pre-pass is
+additive, and `tests/test_rules_pipeline.py::TestNoRulesIsUnchanged` pins that
+0.4.7 parity mechanically. What *is* breaking: requiredness is now
+`RuleState.required`, not `FeatureDef.mandatory`, so anything reading
+`mandatory` as the whole answer is now reading half of it; a `ref_*` feature
+config no longer validates without a registered resolver; and there is a new
+`ValidationErrorCode`, which consumers pinning the enum must accept.
+
+### Added
+- `rules.py` — the closed conditional-rule grammar (5 effects, 4 operators, 2
+  connectives, no nesting) and its single-pass evaluator. Public:
+  `parse_rules(raw) -> list[Rule]`, `stringify(value) -> list[str]`,
+  `evaluate_rules(feature_defs, values) -> dict[str, RuleState]`,
+  `narrow_config(config_dict, state)`, `rule_warnings(rules, known_slugs)`,
+  and the `Cond` / `When` / `Rule` / `RuleState` dataclasses. Django-free at
+  import: only the error path of `parse_rules` reaches for
+  `FeatureValidationError`.
+  - **Rules reach the type plugins through the config, not through the
+    types.** `narrow_config` drops forbidden options and replaces a declared
+    `min`/`max`; the narrowed config then goes down the ordinary
+    `parse_config` -> `validate_dto` path, so a forbidden option surfaces as
+    `not_in_options` and a tightened bound as `above_maximum`. No new error
+    codes for *values*, and every host-registered type gets rules for free.
+  - **One pass, no fixed point**: a controlling feature's own visibility is
+    never consulted, so a rule cycle is impossible by construction.
+  - **An unknown controlling slug is not an error** — a feature is reused
+    across categories with different field sets, where the slug simply reads
+    as `empty`. It is a warning (see `validate_configs_structured` below).
+- `ValidationErrorCode.INVALID_RULES` + `error.400.feature_invalid_rules`,
+  raised when `rules` deviate from the grammar. Mirrored in
+  `static_src/src/error-codes.ts` and in `tests/golden/error_codes.json`.
+- `FeatureDef` v2 fields: `rules`, `description`, `example`, `default`,
+  `hints`, `group`. `DaoMeta` is deliberately **not** extended — form metadata
+  never lands in a stored value.
+- `base.ValidationContext` and `BaseFeatureType.validate_dto_in_context(config,
+  dto, context)`, defaulting to `validate_dto`. The pipeline now calls the
+  context form; every existing type notices nothing.
+- `vocabularies.py` — the `VocabularyResolver` protocol (`describe` / `exists`
+  / `is_child` / `labels`), `VocabularyInfo` / `VocabularyLevel`, and the
+  registry (`register_vocabulary_resolver`, `get_vocabulary_resolver`). The
+  protocol only: every implementation lives outside this library.
+- `STAPEL_ATTRIBUTES["VOCABULARY_RESOLVER"]` — dotted path resolved lazily
+  through the settings `import_strings` seam (a class is instantiated once). A
+  runtime registration wins over it.
+- Two built-in types, bringing the registry to twelve:
+  - `ref_select` — `optionsRef {vocabulary, level, parentFeature?}`,
+    `minSelected` / `maxSelected` / `uiStyle`. Codes are checked with
+    `exists`; a *filled* `parentFeature` narrows the level to that term's
+    children (`is_child`, violation -> `not_in_options`), while an empty parent
+    allows the whole level so a form need not be filled in order. `dto_to_dao`
+    snapshots `labels` (unknown code labels as itself) and the
+    vocabulary/level, so display never re-reads the vocabulary;
+    `get_translation_keys()` is `[]` because term labels are the vocabulary's.
+  - `ref_hierarchical_select` — `vocabulary` + a root-to-leaf `levels` parent
+    chain with `minDepth`/`maxDepth`; existence per level plus the `is_child`
+    chain, one label per level in the DAO.
+  - Both are **loud without a resolver**: `validate_config` raises
+    `INVALID_CONFIG` ("no vocabulary resolver registered") when the feature is
+    saved, not when the first value is submitted. Parsing a stored config
+    never needs a resolver.
+- `docs/feature-def.schema.json` — JSON Schema 2020-12 with `$defs` for
+  `FeatureDef`, `Rule`, `Cond`, `Hint`, `OptionsRef`, `RefSelectConfig`,
+  `RefHierarchicalSelectConfig`; shipped in the wheel. Gated by
+  `tests/test_feature_def_schema.py`: the dataclass fields equal the schema
+  properties, `required == ["slug", "config"]`, every rule in the corpus
+  validates against `$defs.Rule`, and the schema rejects exactly what
+  `parse_rules` rejects.
+- Golden rule corpus `tests/golden/rules/` — 59 `cases/` (every effect,
+  operator and connective; the whole `stringify` table; unknown controlling
+  slugs; headers; empty payloads) and 10 `pipeline/` cases (hidden features
+  dropped, forbidden options rejected, narrowed bounds enforced), run by
+  `tests/test_rules_golden.py` with the same `GOLDEN_RECORD=1` protocol as
+  `tests/test_golden.py`. attributes-react runs a generated copy of both, so
+  the two evaluators cannot diverge silently.
+- Config-form declarations for the two new types. The vocabulary pointer is
+  the one nested config key in the library, declared by dotted path
+  (`optionsRef.vocabulary`); no new field-kind was needed, so the committed
+  admin bundle is untouched. en/ru admin locale entries added.
+
+### Changed
+- `validate_dto`, `validate_dto_structured` and `normalize_to_dao` run one
+  rule pre-pass and then: take requiredness from `RuleState.required` instead
+  of `FeatureDef.mandatory`; **skip a hidden feature entirely** (not
+  validated, `OK` in the structured result, silently dropped from the DAO even
+  if a value was submitted); and parse the *narrowed* config. `validate_dto`
+  raises `INVALID_RULES` on a broken grammar, `validate_dto_structured`
+  reports it on `_root` — the schema, not the payload, is what is broken.
+- `validate_configs_structured(configs, known_slugs=None)` — new optional
+  argument. It now also parses `rules` (failing the feature with
+  `INVALID_RULES`) and, when `known_slugs` is given, warns about rule
+  conditions and `optionsRef.parentFeature` naming slugs that set does not
+  contain. Warnings stay non-blocking, as before.
+- `Makefile`: `--budget 5200` for `llms.txt` (43 surface entries now). The
+  standing call is to raise the ceiling, never to trim intent lines to fit.
+
 ## [0.4.7] - 2026-08-22
 
 Patch (pre-1.0: minor = breaking, patch = compatible). Bug fix, no schema
