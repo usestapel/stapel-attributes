@@ -7,6 +7,7 @@
   "empty_options",
   "invalid_config",
   "invalid_format",
+  "invalid_rules",
   "invalid_type",
   "mandatory_missing",
   "min_greater_than_max",

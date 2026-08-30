@@ -32,6 +32,8 @@ export const ValidationErrorCode = {
   INVALID_CONFIG: "invalid_config",
   MIN_GREATER_THAN_MAX: "min_greater_than_max",
   EMPTY_OPTIONS: "empty_options",
+  // A feature's `rules` deviate from the closed grammar (rules.py / rules.ts).
+  INVALID_RULES: "invalid_rules",
 } as const;
 
 /** A machine validation-error code emitted by the engine. */
