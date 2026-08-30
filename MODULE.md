@@ -16,7 +16,7 @@ catalog's `categories/feature_types` engine + the `ads` value-validation pipelin
 |---|---|
 | Engine core (`base.py`) | `BaseFeatureType[TConfig, TDto, TDao]` — the type-plugin ABC; `DictDataclassSerializer` (dataclass serializer returning dicts, drf-polymorphic-compatible); `DaoMeta` (shared DAO metadata: name/order/title/badge/translate); `FeatureDef` — the plain feature-definition structure the engine operates on (slug, config, id, name, mandatory, display flags, `rules`, and the form metadata `description`/`example`/`default`/`hints`/`group`); `ValidationContext` — the sibling-values envelope for `validate_dto_in_context` |
 | Type registry (`registry.py`) | Open registry (`register_feature_type`, `registered_types`, `get_feature_type`, `get_all_type_slugs`); parse/convert helpers (`parse_config`, `parse_dto`, `dao_to_dict`, `dto_to_dao`, `normalize_feature_dto`, `validate_feature_config`, `validate_feature_dto`, `format_feature_value`, `get_default_value`); translation-key helpers |
-| Built-in types (`types/`) | `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`, `hierarchical_select`, `convertible_unit`, `ref_select`, `ref_hierarchical_select` — each a plugin directory of `config.py` / `dto.py` / `dao.py` / `type.py` |
+| Built-in types (`types/`) | `int`, `float`, `string`, `bool`, `hex_color`, `select`, `date`, `header`, `hierarchical_select`, `convertible_unit`, `ref_select`, `ref_hierarchical_select`, `group` — each a plugin directory of `config.py` / `dto.py` / `dao.py` / `type.py` |
 | Polymorphic serializers (`serializers.py`) | Factories for `FeatureConfig`/`FeatureDto`/`FeatureDao` polymorphic serializers (drf-polymorphic, `type` discriminator) + `PolymorphicProxySerializer`s for OpenAPI (drf-spectacular); caches keyed on the registry version, so late registrations are always reflected |
 | Validation pipeline (`validation.py`) | `validate_dto(configs, dto)` (raise-style), `normalize_to_dao(configs, dto)` (DTO→DAO with header injection and ordering), `validate_dto_structured` / `validate_configs_structured` / `validate_dao_structured` (batch results), `validate_description`; `coerce_feature_defs` accepts FeatureDef lists, dicts, or `{slug: config}` mappings |
 | Conditional rules (`rules.py`) | The closed rule grammar (`parse_rules`, `Rule`/`Cond`/`When`), value canonicalization (`stringify`), the single-pass evaluator (`evaluate_rules` -> `RuleState`), the type-agnostic `narrow_config`, and `rule_warnings`. Django-free at import; mirrored in TypeScript against one shared corpus |
@@ -66,7 +66,7 @@ call time; caches invalidate on `setting_changed`.
 
 Three layers, later wins per slug:
 
-1. built-ins (`stapel_attributes.types` — the twelve generic types);
+1. built-ins (`stapel_attributes.types` — the thirteen generic types);
 2. `STAPEL_ATTRIBUTES["EXTRA_TYPES"]` — merged over the built-ins;
 3. runtime `register_feature_type(cls)` — e.g. from a host app's
    `AppConfig.ready()`; re-registering a slug overrides it.
@@ -308,6 +308,60 @@ Parsing a stored config never needs a resolver.
 - `get_translation_keys()` is `[]`: term labels are owned by the vocabulary,
   not by the category schema.
 - Facets read `value` (the codes), exactly as for `select`.
+
+### `group` — the composite (a repeatable subform)
+
+One feature holding a small table: a list of rows, each row a set of child
+features of the *other* kinds. It exists because roughly 2 % of the Avito
+autoload corpus is exactly this shape (2 468 fields carry `children`, e.g.
+`DiscountLadderList` — "quantity from N, discount M %", up to five rows), and
+no other kind could express it.
+
+```json
+{"type": "group",
+ "fields": [{"slug": "quantity", "name": "Quantity", "mandatory": true,
+             "config": {"type": "int", "min": 1}},
+            {"slug": "discount", "name": "Discount", "config": {"type": "int", "min": 1, "max": 30}}],
+ "repeat": {"min": 1, "max": 5}}
+```
+
+| | |
+|---|---|
+| Config | `fields` (child feature definitions, non-empty), `repeat` (`{min, max}` or `null`) |
+| DTO | `{type, value: [{child_slug: value or {type, value}}, …]}` |
+| DAO | `{type, value: [{child_slug: <child DAO with its own DaoMeta + order>}, …]}` |
+
+- **Nesting depth is 1**, and it is enforced, not a convention: a child may not
+  be a `group` (nor a `header`) — `INVALID_CONFIG`.
+- **A child may not carry `rules`.** `evaluate_rules` reads a flat
+  `{slug: value}` map of *top-level* features; a row's values are not in that
+  namespace, so a rule written on a child could never fire and a rule outside
+  could never read a child's value. Rather than accept such a rule and silently
+  never fire it, the config is refused. Conditional behaviour for a composite is
+  expressed **from outside**, as a rule on the group feature itself — `require`,
+  `show` and `hide` all work on a group exactly as on any other kind.
+- Each cell is validated by the child's own type through the ordinary registry
+  entry points, so a group inherits every kind's constraints for free and a
+  newly registered kind works inside a group the day it is registered. A cell
+  failure keeps its own machine code and gains a path:
+  `rows[1].discount: Value must be <= 30` with `error_params={"row": 1,
+  "child": "discount"}`.
+- **A row is its own value namespace**: a `ref_select` child narrowing by
+  `optionsRef.parentFeature` reads the parent from the *same row*.
+- `repeat: null` means one row; `repeat.min` bites on a submitted table, never
+  on an empty optional one (an empty group is an absent value, and requiredness
+  stays the pipeline's business).
+- `get_translation_keys()` aggregates over the children — each child's `name`
+  plus whatever the child's own type contributes. A child is not a catalog row,
+  so nothing else would ever walk it.
+- **Not a facet.** stapel-search maps `group` to `skip`: a table has no single
+  filterable value. A composite is a form shape, not a search axis.
+- No admin config form is declared (`config_form()` is `[]`): the Django admin
+  edits a group's `fields` as raw JSON, and the schema-driven config editor
+  falls back to its unsupported notice. The composer UI is
+  `@stapel/attributes-react`.
+- Careful: `FeatureDef.group` (a string, the *form section*) and the `group`
+  *type* are different things that share a word.
 
 ### `validate_dto_in_context` — the sibling-values hook
 

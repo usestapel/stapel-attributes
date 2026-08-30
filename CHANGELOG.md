@@ -4,6 +4,81 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.6.0] - 2026-08-31
+
+**Minor = breaking** (pre-1.0) only in the registry-shape sense: the built-in
+registry grows a thirteenth slug, so anything enumerating the type list (a
+facet-mapping table, a value-editor table, a pinned snapshot) must accept it.
+Nothing about the existing twelve types changes.
+
+### Added — `group`, the composite kind
+
+One feature holding a small table: a list of rows, each row a set of child
+features of the other kinds. The deferred item of the attributes-v2 spec
+(§596, "Композитные поля (group-kind)") — and the only shape in the Avito
+autoload corpus that no kind could express: **2 468 raw fields carry
+`children`** (2 454 `DiscountLadderList`, 14 `CompatibleCars`), which the
+importer had to count and drop.
+
+```json
+{"type": "group",
+ "fields": [{"slug": "quantity", "mandatory": true, "config": {"type": "int", "min": 1}},
+            {"slug": "discount", "config": {"type": "int", "min": 1, "max": 30}}],
+ "repeat": {"min": 1, "max": 5}}
+```
+
+- DTO `{type, value: [{child_slug: value}, …]}`; DAO rows whose cells are the
+  children's own DAOs, each carrying its `DaoMeta` (`name`, `order`, `title`,
+  `badge`, `translate`) — a stored row renders without the schema.
+- Every cell is validated by the child's own type through the ordinary registry
+  entry points, so a group inherits each kind's constraints for free and a
+  newly registered kind works inside a group the day it is registered. A cell
+  failure keeps its machine code and gains a path — `rows[1].discount: Value
+  must be <= 30`, `error_params={"row": 1, "child": "discount"}`. **No new
+  error code**: the composite adds no error vocabulary of its own.
+- A row is its own value namespace, so a `ref_select` child narrowing by
+  `optionsRef.parentFeature` reads the parent from the *same row*.
+- `repeat: {min, max}` bounds the row count (`BELOW_MINIMUM` / `ABOVE_MAXIMUM`);
+  `repeat: null` is a single-row group. `repeat.min` bites on a submitted
+  table, never on an empty optional one — an empty group is an absent value and
+  requiredness stays the pipeline's business (static `mandatory` or a rule).
+
+Three boundaries are **enforced, not documented conventions** — each is a
+refused config, because the alternative in every case is a silent no-op:
+
+- **Nesting depth 1** — a child may not be a `group`.
+- **No `header` child** — a header is injected by the pipeline from the schema
+  and carries no value; inside a row it would have nothing to inject into.
+- **No `rules` on a child.** `evaluate_rules` reads a flat `{slug: value}` map
+  of *top-level* features; a row's values are not in that namespace, so a rule
+  on a child could never fire and a rule outside could never read a child's
+  value. Conditional behaviour for a composite is expressed from outside, as a
+  rule on the group feature itself — `require` / `show` / `hide` work on a
+  group exactly as on any other kind (pinned by tests).
+
+`get_translation_keys()` aggregates over the children: each child's `name` plus
+whatever the child's own type contributes. A child is not a catalog row, so
+nothing else would ever walk it.
+
+`docs/feature-def.schema.json` gains `$defs.GroupConfig` / `$defs.GroupRepeat` —
+the composite is a cross-language contract (both editors draw the subform), so
+it belongs in the §68 canon next to the two ref configs.
+
+No admin config form is declared (`config_form()` returns `[]`): the Django
+admin edits `fields` as raw JSON and the schema-driven config editor shows its
+unsupported notice. The composer UI is `@stapel/attributes-react`.
+
+Note the word collision, which is deliberate and load-bearing in neither
+direction: `FeatureDef.group` (a string) is the *form section*; the `group`
+*type* is the composite.
+
+### Tests
+- `tests/test_group_type.py` — 48 cases: the three enforced boundaries, repeat
+  bounds in both directions, per-row delegation to every other built-in kind
+  (parametrized), the row-scoped `ref_select` parent narrowing, DAO shape and
+  child `DaoMeta`, `format_value`, translation-key aggregation, and the group
+  under `require` / `hide` rules end-to-end through the pipeline.
+
 ## [0.5.1] - 2026-08-30
 
 Patch (pre-1.0: minor = breaking, patch = compatible). Test corpus only —

@@ -1,7 +1,7 @@
 {
   "module": "stapel-attributes",
-  "version": "0.5.1",
-  "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, twelve built-in types (two of them vocabulary-backed), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
+  "version": "0.6.0",
+  "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
   "axes": [
     {
       "key": "EXTRA_TYPES",
@@ -13,7 +13,7 @@
         "co_gates": []
       },
       "curated": {
-        "summary": "MERGE (additive over the twelve built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).",
+        "summary": "MERGE (additive over the thirteen built-ins): dotted paths loaded lazily on first registry access. Each entry is a BaseFeatureType subclass or a module that registers types via @register_feature_type on import; loading is additive and idempotent (conf.py, MODULE.md Extension points table).",
         "business_label": "Extra attribute (feature) types available to categories/listings"
       }
     }

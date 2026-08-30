@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://usestapel.dev/schemas/stapel-attributes/feature-def.schema.json",
   "title": "FeatureDef",
-  "description": "Canonical shape of a stapel-attributes feature definition. One source, several emitters: the Python dataclass is gated against it (tests/test_feature_def_schema.py), attributes-react generates its TypeScript types from it, and stapel-categories checks its ResolvedFeature payload against it. Per-type `config` shapes stay with their type plugin; only the two vocabulary-backed configs are described here because their shape is part of the ref contract.",
+  "description": "Canonical shape of a stapel-attributes feature definition. One source, several emitters: the Python dataclass is gated against it (tests/test_feature_def_schema.py), attributes-react generates its TypeScript types from it, and stapel-categories checks its ResolvedFeature payload against it. Per-type `config` shapes stay with their type plugin; the two vocabulary-backed configs and the composite `group` config are described here because their shape is part of a cross-language contract (the ref contract, and the composite subform both editors render).",
   "$ref": "#/$defs/FeatureDef",
   "$defs": {
     "FeatureDef": {
@@ -166,6 +166,35 @@
         "minSelected": {"type": "integer", "minimum": 0, "default": 0},
         "maxSelected": {"type": ["integer", "null"], "minimum": 1, "default": 1},
         "uiStyle": {"enum": ["dropdown", "chips"], "default": "dropdown"}
+      }
+    },
+
+    "GroupRepeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {"type": "integer", "minimum": 0, "default": 0},
+        "max": {"type": ["integer", "null"], "minimum": 1}
+      },
+      "description": "Row-count bounds of a repeatable group; `max: null` is unbounded."
+    },
+
+    "GroupConfig": {
+      "type": "object",
+      "required": ["type", "fields"],
+      "properties": {
+        "type": {"const": "group"},
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/FeatureDef"},
+          "description": "Child feature definitions. Nesting depth is 1: no child may be a `group` (nor a `header`), and no child may carry `rules`."
+        },
+        "repeat": {
+          "oneOf": [{"$ref": "#/$defs/GroupRepeat"}, {"type": "null"}],
+          "default": null,
+          "description": "Repeatable row bounds, or null for a single-row group."
+        }
       }
     },
 

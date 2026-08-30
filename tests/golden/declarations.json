@@ -186,6 +186,10 @@
     ],
     "label_key": "admin.attributes.type.float"
   },
+  "group": {
+    "fields": [],
+    "label_key": "admin.attributes.type.group"
+  },
   "header": {
     "fields": [
       {
