@@ -31,16 +31,22 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from django.core.exceptions import ValidationError
 
-from stapel_attributes.base import FeatureDef, dataclass_to_dict_no_none
+from stapel_attributes.base import FeatureDef, ValidationContext, dataclass_to_dict_no_none
 from stapel_attributes.errors import ERROR_CODE_TO_KEY
 from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.registry import (
     get_feature_type,
     normalize_feature_dto,
     parse_config,
-    validate_feature_dto,
 )
 from stapel_attributes.registry import dto_to_dao as registry_dto_to_dao
+from stapel_attributes.rules import (
+    RuleState,
+    evaluate_rules,
+    narrow_config,
+    parse_rules,
+    rule_warnings,
+)
 from stapel_attributes.results import (
     FeatureValidationResult,
     ValidationBatchResult,
@@ -52,6 +58,10 @@ ConfigsInput = Union[
     Iterable[Union[FeatureDef, Dict[str, Any]]],
     Mapping[str, Union[FeatureDef, Dict[str, Any]]],
 ]
+
+#: The state of a feature no rule touches — visible, not required, unbounded.
+#: Also the fallback for a slug the pre-pass did not produce a state for.
+_VISIBLE = RuleState()
 
 
 def coerce_feature_defs(configs: ConfigsInput) -> List[FeatureDef]:
@@ -131,13 +141,17 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
     Input format: ``{slug: {type: "...", value: ...}}``
 
     Rules:
-    1) All mandatory features must have a value (except headers)
+    1) Every feature the rule pre-pass marks ``required`` must have a value
+       (except headers)
     2) No features that are not in *configs*
-    3) Values must be valid per type and constraints
+    3) Values must be valid per type and constraints, against the config
+       narrowed by the rule state
     4) Header features should NOT be submitted (they're auto-generated)
+    5) A feature the rules hide is neither validated nor required
 
     Raises:
-        ValidationError: with one message per offending feature.
+        ValidationError: with one message per offending feature; a feature
+        whose ``rules`` break the grammar raises ``INVALID_RULES``.
     """
     if features_dto is None:
         return
@@ -148,6 +162,8 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
         )
 
     lookup, allowed_features = build_feature_lookup(configs)
+    state = evaluate_rules(allowed_features, features_dto)
+    context = ValidationContext(values=features_dto, feature_defs=allowed_features)
     errors: Dict[str, str] = {}
 
     # Validate submitted features
@@ -159,9 +175,14 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
             errors[feature_key] = f"Feature '{feature_key}' is not allowed"
             continue
 
+        feature_state = state.get(get_feature_slug(feature), _VISIBLE)
+        # Hidden by a rule: not validated, and dropped from the DAO later.
+        if not feature_state.visible:
+            continue
+
         # Parse config to typed dataclass
         try:
-            config = parse_config(feature.config)
+            config = parse_config(narrow_config(feature.config, feature_state))
         except ValidationError as exc:
             errors[feature_key] = f"Feature '{feature.name}' has invalid config: {exc}"
             continue
@@ -178,13 +199,15 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
             else:
                 dto_data = {**dto_data, 'type': config.type}
 
-            validate_feature_dto(config, dto_data)
+            feature_type = get_feature_type(config.type)
+            dto = feature_type.normalize_dto(config, dto_data)
+            feature_type.validate_dto_in_context(config, dto, context)
         except ValidationError as exc:
             errors[feature_key] = exc.messages[0] if hasattr(exc, "messages") else str(exc)
         except (TypeError, KeyError, AttributeError, ValueError, IndexError) as exc:
             errors[feature_key] = f"Invalid value for feature '{feature.name}': {exc}"
 
-    # Check mandatory features (except headers)
+    # Check required features (except headers)
     for feature in allowed_features:
         # Parse config to typed dataclass
         try:
@@ -209,7 +232,7 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
         # normalizes to a valid-but-empty value and is dropped from the DAO.
         raw = submitted_value.get('value') if isinstance(submitted_value, dict) else submitted_value
         is_empty = raw is None or raw == '' or raw == []
-        if feature.mandatory and (not submitted or is_empty):
+        if state.get(slug, _VISIBLE).required and (not submitted or is_empty):
             errors[slug] = f"Mandatory feature '{feature.name}' is required"
 
     if errors:
@@ -234,20 +257,26 @@ def normalize_to_dao(
     Input: ``{slug: {type: "...", value: ...}}``
     Output: ``{slug: {type: "...", value: ..., order: N, title: bool, badge: bool, ...}}``
 
-    Headers are injected based on their position in the configs list.
+    Headers are injected based on their position in the configs list. A
+    feature the rules hide is dropped silently even when a value was
+    submitted — a hidden field's value is not part of the declaration.
     """
     if not features_dto:
         features_dto = {}
 
     lookup, allowed_features = build_feature_lookup(configs)
+    state = evaluate_rules(allowed_features, features_dto)
     result: Dict[str, Dict[str, Any]] = {}
 
     # Process features in configs order to maintain proper ordering
     for order, feature in enumerate(allowed_features):
         slug = get_feature_slug(feature)
+        feature_state = state.get(slug, _VISIBLE)
+        if not feature_state.visible:
+            continue
         # Parse config to typed dataclass
         try:
-            config = parse_config(feature.config)
+            config = parse_config(narrow_config(feature.config, feature_state))
         except ValidationError:
             # Skip features with invalid config (should have been caught in validation)
             continue
@@ -323,8 +352,11 @@ def validate_dto_structured(
     Validate a features DTO payload with structured output.
 
     Behavior:
-    - Validates each submitted feature against its config
-    - Checks all mandatory features are present
+    - Runs the rule pre-pass (:func:`~stapel_attributes.rules.evaluate_rules`)
+      once, then validates each submitted feature against its *narrowed* config
+    - A feature the rules hide is reported ``OK`` without being validated
+    - Requiredness comes from the rule state (static ``mandatory`` OR a
+      matching ``require`` rule), never from ``mandatory`` alone
     - Ignores features not in *configs* (no error, just skip)
 
     Args:
@@ -332,7 +364,9 @@ def validate_dto_structured(
         features_dto: ``{slug: {type, value, ...}}``
 
     Returns:
-        ValidationBatchResult with individual feature results
+        ValidationBatchResult with individual feature results; a feature whose
+        ``rules`` break the grammar fails the whole batch on ``_root`` with
+        ``INVALID_RULES`` (the schema, not the payload, is broken).
     """
     if features_dto is None:
         features_dto = {}
@@ -353,6 +387,23 @@ def validate_dto_structured(
         )
 
     lookup, allowed_features = build_feature_lookup(configs)
+    try:
+        state = evaluate_rules(allowed_features, features_dto)
+    except FeatureValidationError as exc:
+        return ValidationBatchResult(
+            valid=False,
+            results=[
+                FeatureValidationResult(
+                    slug='_root',
+                    status=ValidationStatus.VALIDATION_FAILED,
+                    error=exc.error_code,
+                    localizable_error=ERROR_CODE_TO_KEY.get(exc.error_code),
+                    params={'feature': '_root'},
+                    message=exc.messages[0] if exc.messages else str(exc),
+                )
+            ],
+        )
+    context = ValidationContext(values=features_dto, feature_defs=allowed_features)
     results: List[FeatureValidationResult] = []
     all_valid = True
 
@@ -373,9 +424,19 @@ def validate_dto_structured(
         if feature.id is not None:
             submitted_slugs.add(str(feature.id))
 
+        feature_state = state.get(slug, _VISIBLE)
+        # Hidden by a rule: silently accepted, and dropped from the DAO.
+        if not feature_state.visible:
+            results.append(FeatureValidationResult(
+                id=feature.id,
+                slug=slug,
+                status=ValidationStatus.OK
+            ))
+            continue
+
         # Parse config to typed dataclass
         try:
-            config = parse_config(feature.config)
+            config = parse_config(narrow_config(feature.config, feature_state))
         except ValidationError as exc:
             results.append(FeatureValidationResult(
                 id=feature.id,
@@ -401,14 +462,14 @@ def validate_dto_structured(
         # the DAO. JS is not the source of truth (docs §4), so reject here.
         raw_value = dto_data.get('value') if isinstance(dto_data, dict) else dto_data
         is_empty = raw_value is None or raw_value == '' or raw_value == []
-        if not feature.mandatory and is_empty:
+        if not feature_state.required and is_empty:
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
                 status=ValidationStatus.OK
             ))
             continue
-        if feature.mandatory and is_empty:
+        if feature_state.required and is_empty:
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
@@ -435,8 +496,8 @@ def validate_dto_structured(
             # Normalize DTO
             dto = feature_type.normalize_dto(config, dto_data)
 
-            # Validate DTO
-            feature_type.validate_dto(config, dto)
+            # Validate DTO (types that need siblings read them off the context)
+            feature_type.validate_dto_in_context(config, dto, context)
 
             # Success
             results.append(FeatureValidationResult(
@@ -489,8 +550,8 @@ def validate_dto_structured(
         if config.type == 'header':
             continue
 
-        # Check if mandatory
-        if feature.mandatory:
+        # Required per the rule state (static mandatory or a matching rule)
+        if state.get(slug, _VISIBLE).required:
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
@@ -525,22 +586,48 @@ def _unknown_config_keys(raw_config: Any, config_class: Any) -> List[str]:
     return sorted(k for k in raw_config if k not in known)
 
 
-def validate_configs_structured(configs: ConfigsInput) -> ValidationBatchResult:
+def _parent_feature_warnings(config: Any, known_slugs: set) -> List[str]:
+    """Warn when a ref-type's ``optionsRef.parentFeature`` names a slug the
+    owning set does not define — same non-blocking status as a rule condition
+    pointing at an unknown slug."""
+    options_ref = getattr(config, 'optionsRef', None)
+    if options_ref is None:
+        return []
+    parent = (
+        options_ref.get('parentFeature') if isinstance(options_ref, dict)
+        else getattr(options_ref, 'parentFeature', None)
+    )
+    if parent and parent not in known_slugs:
+        return [f"optionsRef.parentFeature references unknown feature slug: {parent}"]
+    return []
+
+
+def validate_configs_structured(
+    configs: ConfigsInput,
+    known_slugs: Optional[Iterable[str]] = None,
+) -> ValidationBatchResult:
     """
-    Validate all feature configs in a set of feature definitions.
+    Validate all feature configs — and rules — in a set of feature definitions.
 
     Used when saving the owning entity (e.g. a category) to ensure configs
-    are valid.
+    are valid. ``rules`` are parsed here too: a deviation from the closed
+    grammar fails the feature with ``INVALID_RULES``.
 
     Also surfaces (non-blocking) ``warnings`` on an otherwise-OK result for
     any raw config key not recognized by the type's config dataclass — see
-    :func:`_unknown_config_keys`. A warning never flips ``status`` to
+    :func:`_unknown_config_keys` — and, when *known_slugs* is given, for a
+    rule condition or a ``ref_select`` ``parentFeature`` naming a slug that
+    set does not contain. A warning never flips ``status`` to
     VALIDATION_FAILED or ``valid`` to False: the value was accepted (the
     unknown key was just dropped), this only flags that the input carried
-    dead weight (usually a typo).
+    dead weight (usually a typo). An unknown controlling slug is deliberately
+    a warning and not an error — the same feature is reused across categories
+    with different field sets, where it simply reads as ``empty``.
 
     Args:
         configs: Feature definitions (see :func:`coerce_feature_defs`)
+        known_slugs: The slugs a rule may legitimately reference (usually the
+            owning category's whole feature set). Omitted -> no such warnings.
 
     Returns:
         ValidationBatchResult with individual feature results
@@ -548,28 +635,32 @@ def validate_configs_structured(configs: ConfigsInput) -> ValidationBatchResult:
     _, allowed_features = build_feature_lookup(configs)
     results: List[FeatureValidationResult] = []
     all_valid = True
+    reference_slugs = set(known_slugs) if known_slugs is not None else None
 
     for feature in allowed_features:
         slug = get_feature_slug(feature)
 
         try:
+            rules = parse_rules(feature.rules)
             config = parse_config(feature.config)
 
             # Get feature type and validate config
             feature_type = get_feature_type(config.type)
             feature_type.validate_config(config)
 
+            warnings = []
             unknown_keys = _unknown_config_keys(feature.config, type(config))
-            warnings = (
-                [f"Unknown config key(s) ignored: {', '.join(unknown_keys)}"]
-                if unknown_keys else None
-            )
+            if unknown_keys:
+                warnings.append(f"Unknown config key(s) ignored: {', '.join(unknown_keys)}")
+            if reference_slugs is not None:
+                warnings.extend(rule_warnings(rules, reference_slugs))
+                warnings.extend(_parent_feature_warnings(config, reference_slugs))
 
             results.append(FeatureValidationResult(
                 id=feature.id,
                 slug=slug,
                 status=ValidationStatus.OK,
-                warnings=warnings,
+                warnings=warnings or None,
             ))
 
         except FeatureValidationError as exc:
