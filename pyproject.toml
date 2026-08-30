@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stapel-attributes"
-version = "0.6.0"
+version = "0.6.1"
 description = "Typed attributes engine for the Stapel framework"
 readme = "README.md"
 license = { text = "MIT" }
@@ -41,6 +41,7 @@ packages = [
     "stapel_attributes.types.select",
     "stapel_attributes.types.date",
     "stapel_attributes.types.header",
+    "stapel_attributes.types.group",
     "stapel_attributes.types.hierarchical_select",
     "stapel_attributes.types.convertible_unit",
     "stapel_attributes.types.ref_select",

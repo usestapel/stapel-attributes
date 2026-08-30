@@ -4,6 +4,27 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.6.1] - 2026-08-31
+
+### Fixed
+
+- **The 0.6.0 wheel could not be imported at all.** `[tool.setuptools]
+  packages` in `pyproject.toml` is an explicit list, and
+  `stapel_attributes.types.group` — the package 0.6.0 exists to add — was not
+  on it. So the published wheel shipped a `types/__init__.py` whose line 31
+  reads `from stapel_attributes.types.group import GroupFeatureType` and a
+  `types/` directory with no `group` in it: every `import stapel_attributes` on
+  0.6.0 raised `ModuleNotFoundError`, which is every consumer of the library,
+  not only the ones using the new kind. 0.6.1 adds the entry; the built wheel
+  now carries the package (verified against the artifact, not the source tree).
+
+- **A gate that would have caught it**, because the one in place could not:
+  CI installs `-e .`, which imports from the source tree, where `group/` was
+  right there — the tests passed on a layout the wheel did not have.
+  `tests/test_packaging.py` compares the packages on disk against the packages
+  pyproject declares, in both directions, so a new type (or a removed one)
+  fails the build instead of the release.
+
 ## [0.6.0] - 2026-08-31
 
 **Minor = breaking** (pre-1.0) only in the registry-shape sense: the built-in
