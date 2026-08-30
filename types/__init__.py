@@ -1,6 +1,6 @@
 """Built-in feature type implementations.
 
-All ten generic feature types are registered automatically when this module
+All twelve generic feature types are registered automatically when this module
 is imported (the registry imports it lazily on first access). ``size_grid``
 (clothing/shoe size tables) remains a marketplace-vertical type, NOT shipped
 here — it is registered by vertical packages via
@@ -8,7 +8,10 @@ here — it is registered by vertical packages via
 MODULE.md for the worked example). ``convertible_unit`` (values with
 convertible units — length/weight/area/volume/temperature) used to be
 vertical-only alongside it; it is generic enough to ship as a built-in and
-moved here.
+moved here. ``ref_select`` / ``ref_hierarchical_select`` are the
+vocabulary-backed pair: their options live in an external vocabulary reached
+through the resolver seam (``stapel_attributes.vocabularies``), never inline
+in the config.
 """
 
 # Import all feature types to trigger registration
@@ -22,6 +25,8 @@ from stapel_attributes.types.date import DateFeatureType
 from stapel_attributes.types.header import HeaderFeatureType
 from stapel_attributes.types.hierarchical_select import HierarchicalSelectFeatureType
 from stapel_attributes.types.convertible_unit import ConvertibleUnitFeatureType
+from stapel_attributes.types.ref_select import RefSelectFeatureType
+from stapel_attributes.types.ref_hierarchical_select import RefHierarchicalSelectFeatureType
 
 __all__ = [
     'IntFeatureType',
@@ -34,4 +39,6 @@ __all__ = [
     'HeaderFeatureType',
     'HierarchicalSelectFeatureType',
     'ConvertibleUnitFeatureType',
+    'RefSelectFeatureType',
+    'RefHierarchicalSelectFeatureType',
 ]

@@ -24,6 +24,8 @@
   "admin.attributes.type.hierarchical_select": "Иерархический выбор (дерево)",
   "admin.attributes.type.date": "Дата",
   "admin.attributes.type.header": "Заголовок (разделитель)",
+  "admin.attributes.type.ref_select": "Справочный выбор",
+  "admin.attributes.type.ref_hierarchical_select": "Справочный иерархический выбор",
 
   "admin.attributes.form.int.min": "Минимум",
   "admin.attributes.form.int.max": "Максимум",
@@ -79,5 +81,17 @@
   "admin.attributes.form.date.placeholder": "Плейсхолдер поля",
 
   "admin.attributes.form.header.style": "Стиль заголовка",
-  "admin.attributes.form.header.label": "Текст заголовка (ключ перевода)"
+  "admin.attributes.form.header.label": "Текст заголовка (ключ перевода)",
+
+  "admin.attributes.form.ref_select.optionsRef.vocabulary": "Справочник",
+  "admin.attributes.form.ref_select.optionsRef.level": "Уровень",
+  "admin.attributes.form.ref_select.optionsRef.parentFeature": "Родительская характеристика (slug)",
+  "admin.attributes.form.ref_select.minSelected": "Минимум значений",
+  "admin.attributes.form.ref_select.maxSelected": "Максимум значений",
+  "admin.attributes.form.ref_select.uiStyle": "Стиль интерфейса",
+
+  "admin.attributes.form.ref_hierarchical_select.vocabulary": "Справочник",
+  "admin.attributes.form.ref_hierarchical_select.levels": "Уровни (от корня к листу)",
+  "admin.attributes.form.ref_hierarchical_select.minDepth": "Минимальная глубина",
+  "admin.attributes.form.ref_hierarchical_select.maxDepth": "Максимальная глубина"
 }

@@ -11,9 +11,13 @@ The declarations are ported 1:1 from the legacy catalog's ``feature_types.js``
 latent quirks (e.g. ``header.style`` default ``'h2'`` matches no option —
 LN-B01). Labels are emitted as i18n keys (``admin.attributes.form.<type>.<field>``);
 the en/ru catalogs carry the literal strings. The kind dictionary
-(:data:`FIELD_KINDS`) is the minimally-sufficient set the nine generic types
-need; hosts registering exotic kinds ship their own JS widget (the config
-widget registry) but declare through the same contract.
+(:data:`FIELD_KINDS`) is the minimally-sufficient set the eleven declaring
+built-ins need; hosts registering exotic kinds ship their own JS widget (the
+config widget registry) but declare through the same contract.
+
+A field ``name`` is the config key it edits. The two ref-types are the one
+place a key is nested, and their declaration says so with a dotted path
+(``optionsRef.vocabulary``) rather than inventing a second naming scheme.
 """
 from __future__ import annotations
 
@@ -22,7 +26,8 @@ from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
-# Field-kind dictionary (LOGIC-NOTES §1) — minimally sufficient for 9 generic types
+# Field-kind dictionary (LOGIC-NOTES §1) — minimally sufficient for the 11
+# built-ins that declare a form (the ref-types added none)
 # ---------------------------------------------------------------------------
 # kind -> tuple of parameter names it understands (documentation + validation).
 FIELD_KINDS: Dict[str, tuple] = {
@@ -179,6 +184,38 @@ def _hierarchical_select_form() -> List[FormField]:  # LN-T-hierarchical_select
     ]
 
 
+def _ref_select_form() -> List[FormField]:
+    # Not a legacy port — the ref-types are new in 0.5.0. The vocabulary
+    # pointer is nested (``optionsRef``), so its three keys are declared by
+    # dotted path; everything else is a flat config key. The vocabulary and
+    # level are free text on purpose: the admin has no vocabulary list (that
+    # surface lives in stapel-vocabularies), and Python validates both against
+    # the resolver on save.
+    return [
+        _f("ref_select", "optionsRef.vocabulary", "text", required=True),
+        _f("ref_select", "optionsRef.level", "text", required=True),
+        _f("ref_select", "optionsRef.parentFeature", "text"),
+        _f("ref_select", "minSelected", "number", default=0, params={"step": 1}),
+        _f("ref_select", "maxSelected", "max_selected_dropdown", default=1),
+        _f(
+            "ref_select", "uiStyle", "select", required=True, default="dropdown",
+            params={"options": [
+                {"value": "dropdown", "label": "Dropdown"},
+                {"value": "chips", "label": "Chips/Tags"},
+            ]},
+        ),
+    ]
+
+
+def _ref_hierarchical_select_form() -> List[FormField]:
+    return [
+        _f("ref_hierarchical_select", "vocabulary", "text", required=True),
+        _f("ref_hierarchical_select", "levels", "string_options", required=True),
+        _f("ref_hierarchical_select", "minDepth", "number", default=1, params={"step": 1}),
+        _f("ref_hierarchical_select", "maxDepth", "number", params={"step": 1}),
+    ]
+
+
 def _date_form() -> List[FormField]:  # LN-T-date (field literally named 'default'; lockInput — LN-B16)
     return [
         _f(
@@ -228,6 +265,8 @@ BUILTIN_FORMS = {
     "hex_color": _hex_color_form,
     "select": _select_form,
     "hierarchical_select": _hierarchical_select_form,
+    "ref_select": _ref_select_form,
+    "ref_hierarchical_select": _ref_hierarchical_select_form,
     "date": _date_form,
     "header": _header_form,
 }

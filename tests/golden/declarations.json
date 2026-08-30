@@ -300,6 +300,96 @@
     ],
     "label_key": "admin.attributes.type.int"
   },
+  "ref_hierarchical_select": {
+    "fields": [
+      {
+        "kind": "text",
+        "label_key": "admin.attributes.form.ref_hierarchical_select.vocabulary",
+        "name": "vocabulary",
+        "required": true
+      },
+      {
+        "kind": "string_options",
+        "label_key": "admin.attributes.form.ref_hierarchical_select.levels",
+        "name": "levels",
+        "required": true
+      },
+      {
+        "default": 1,
+        "kind": "number",
+        "label_key": "admin.attributes.form.ref_hierarchical_select.minDepth",
+        "name": "minDepth",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "kind": "number",
+        "label_key": "admin.attributes.form.ref_hierarchical_select.maxDepth",
+        "name": "maxDepth",
+        "params": {
+          "step": 1
+        }
+      }
+    ],
+    "label_key": "admin.attributes.type.ref_hierarchical_select"
+  },
+  "ref_select": {
+    "fields": [
+      {
+        "kind": "text",
+        "label_key": "admin.attributes.form.ref_select.optionsRef.vocabulary",
+        "name": "optionsRef.vocabulary",
+        "required": true
+      },
+      {
+        "kind": "text",
+        "label_key": "admin.attributes.form.ref_select.optionsRef.level",
+        "name": "optionsRef.level",
+        "required": true
+      },
+      {
+        "kind": "text",
+        "label_key": "admin.attributes.form.ref_select.optionsRef.parentFeature",
+        "name": "optionsRef.parentFeature"
+      },
+      {
+        "default": 0,
+        "kind": "number",
+        "label_key": "admin.attributes.form.ref_select.minSelected",
+        "name": "minSelected",
+        "params": {
+          "step": 1
+        }
+      },
+      {
+        "default": 1,
+        "kind": "max_selected_dropdown",
+        "label_key": "admin.attributes.form.ref_select.maxSelected",
+        "name": "maxSelected"
+      },
+      {
+        "default": "dropdown",
+        "kind": "select",
+        "label_key": "admin.attributes.form.ref_select.uiStyle",
+        "name": "uiStyle",
+        "params": {
+          "options": [
+            {
+              "label": "Dropdown",
+              "value": "dropdown"
+            },
+            {
+              "label": "Chips/Tags",
+              "value": "chips"
+            }
+          ]
+        },
+        "required": true
+      }
+    ],
+    "label_key": "admin.attributes.type.ref_select"
+  },
   "select": {
     "fields": [
       {

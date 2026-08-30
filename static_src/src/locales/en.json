@@ -24,6 +24,8 @@
   "admin.attributes.type.hierarchical_select": "Hierarchical Select (Tree)",
   "admin.attributes.type.date": "Date",
   "admin.attributes.type.header": "Header (Separator)",
+  "admin.attributes.type.ref_select": "Reference Select",
+  "admin.attributes.type.ref_hierarchical_select": "Reference Hierarchical Select",
 
   "admin.attributes.form.int.min": "Minimum",
   "admin.attributes.form.int.max": "Maximum",
@@ -79,5 +81,17 @@
   "admin.attributes.form.date.placeholder": "Input Placeholder",
 
   "admin.attributes.form.header.style": "Header Style",
-  "admin.attributes.form.header.label": "Header Text (translation key)"
+  "admin.attributes.form.header.label": "Header Text (translation key)",
+
+  "admin.attributes.form.ref_select.optionsRef.vocabulary": "Vocabulary",
+  "admin.attributes.form.ref_select.optionsRef.level": "Level",
+  "admin.attributes.form.ref_select.optionsRef.parentFeature": "Parent Feature (slug)",
+  "admin.attributes.form.ref_select.minSelected": "Min Selected",
+  "admin.attributes.form.ref_select.maxSelected": "Max Selected",
+  "admin.attributes.form.ref_select.uiStyle": "UI Style",
+
+  "admin.attributes.form.ref_hierarchical_select.vocabulary": "Vocabulary",
+  "admin.attributes.form.ref_hierarchical_select.levels": "Levels (root to leaf)",
+  "admin.attributes.form.ref_hierarchical_select.minDepth": "Min Depth",
+  "admin.attributes.form.ref_hierarchical_select.maxDepth": "Max Depth"
 }

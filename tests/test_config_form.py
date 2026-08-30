@@ -20,6 +20,7 @@ from stapel_attributes.base import BaseFeatureType
 BUILTIN_SLUGS = {
     "int", "float", "string", "bool", "hex_color",
     "select", "hierarchical_select", "date", "header",
+    "ref_select", "ref_hierarchical_select",
 }
 
 
