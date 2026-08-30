@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://usestapel.dev/schemas/stapel-attributes/feature-def.schema.json",
+  "title": "FeatureDef",
+  "description": "Canonical shape of a stapel-attributes feature definition. One source, several emitters: the Python dataclass is gated against it (tests/test_feature_def_schema.py), attributes-react generates its TypeScript types from it, and stapel-categories checks its ResolvedFeature payload against it. Per-type `config` shapes stay with their type plugin; only the two vocabulary-backed configs are described here because their shape is part of the ref contract.",
+  "$ref": "#/$defs/FeatureDef",
+  "$defs": {
+    "FeatureDef": {
+      "type": "object",
+      "required": ["slug", "config"],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Payload key the value is submitted under."
+        },
+        "config": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {"type": {"type": "string", "minLength": 1}},
+          "description": "Type-specific configuration, discriminated by `type`."
+        },
+        "id": {
+          "type": ["integer", "string", "null"],
+          "description": "Stable identifier; also accepted as a payload key."
+        },
+        "name": {
+          "type": ["string", "null"],
+          "description": "Display name or translation key; defaults to the slug."
+        },
+        "mandatory": {
+          "type": "boolean",
+          "default": false,
+          "description": "Statically required. Conditional requirement comes from `rules`."
+        },
+        "show_at_title": {"type": "boolean", "default": false},
+        "show_as_badge": {"type": "boolean", "default": false},
+        "translate": {
+          "enum": ["all", "title", "none"],
+          "default": "all"
+        },
+        "rules": {
+          "type": "array",
+          "default": [],
+          "items": {"$ref": "#/$defs/Rule"},
+          "description": "Conditional rules over sibling values (closed grammar)."
+        },
+        "description": {
+          "type": ["string", "null"],
+          "description": "Help text under the field; translation key or literal."
+        },
+        "example": {
+          "type": ["string", "null"],
+          "description": "Placeholder text; translation key or literal."
+        },
+        "default": {
+          "description": "Initial form value in DTO `value` shape; any JSON."
+        },
+        "hints": {
+          "type": "array",
+          "default": [],
+          "items": {"$ref": "#/$defs/Hint"}
+        },
+        "group": {
+          "type": ["string", "null"],
+          "description": "Form section; sections order by first appearance."
+        }
+      }
+    },
+
+    "Rule": {
+      "type": "object",
+      "required": ["effect", "when"],
+      "additionalProperties": false,
+      "properties": {
+        "effect": {"enum": ["require", "show", "hide", "forbid_option", "limit"]},
+        "when": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 1,
+          "properties": {
+            "all": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Cond"}},
+            "any": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Cond"}}
+          }
+        },
+        "option": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Option code to forbid; only on effect `forbid_option`."
+        },
+        "min": {"type": "number", "description": "Only on effect `limit`."},
+        "max": {"type": "number", "description": "Only on effect `limit`."}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"effect": {"const": "forbid_option"}}, "required": ["effect"]},
+          "then": {"required": ["option"]},
+          "else": {"not": {"required": ["option"]}}
+        },
+        {
+          "if": {"properties": {"effect": {"const": "limit"}}, "required": ["effect"]},
+          "then": {"anyOf": [{"required": ["min"]}, {"required": ["max"]}]},
+          "else": {"allOf": [{"not": {"required": ["min"]}}, {"not": {"required": ["max"]}}]}
+        }
+      ]
+    },
+
+    "Cond": {
+      "type": "object",
+      "required": ["feature", "op"],
+      "additionalProperties": false,
+      "properties": {
+        "feature": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Slug of the controlling feature; an unknown slug reads as empty."
+        },
+        "op": {"enum": ["in", "not_in", "filled", "empty"]},
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"},
+          "description": "Required for `in`/`not_in`, forbidden for `filled`/`empty`."
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"op": {"enum": ["in", "not_in"]}}, "required": ["op"]},
+          "then": {"required": ["values"]},
+          "else": {"not": {"required": ["values"]}}
+        }
+      ]
+    },
+
+    "Hint": {
+      "type": "object",
+      "required": ["title", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {"type": "string"},
+        "content": {"type": "string"}
+      }
+    },
+
+    "OptionsRef": {
+      "type": "object",
+      "required": ["vocabulary", "level"],
+      "additionalProperties": false,
+      "properties": {
+        "vocabulary": {"type": "string", "minLength": 1},
+        "level": {"type": "string", "minLength": 1},
+        "parentFeature": {
+          "type": ["string", "null"],
+          "description": "Sibling slug holding the parent term code; when filled, narrows this level to that term's children."
+        }
+      }
+    },
+
+    "RefSelectConfig": {
+      "type": "object",
+      "required": ["type", "optionsRef"],
+      "properties": {
+        "type": {"const": "ref_select"},
+        "optionsRef": {"$ref": "#/$defs/OptionsRef"},
+        "minSelected": {"type": "integer", "minimum": 0, "default": 0},
+        "maxSelected": {"type": ["integer", "null"], "minimum": 1, "default": 1},
+        "uiStyle": {"enum": ["dropdown", "chips"], "default": "dropdown"}
+      }
+    },
+
+    "RefHierarchicalSelectConfig": {
+      "type": "object",
+      "required": ["type", "vocabulary", "levels"],
+      "properties": {
+        "type": {"const": "ref_hierarchical_select"},
+        "vocabulary": {"type": "string", "minLength": 1},
+        "levels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "description": "Root-to-leaf level chain; each level's vocabulary parent is the previous one."
+        },
+        "minDepth": {"type": "integer", "minimum": 1, "default": 1},
+        "maxDepth": {"type": ["integer", "null"], "minimum": 1}
+      }
+    }
+  }
+}
