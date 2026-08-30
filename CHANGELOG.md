@@ -4,6 +4,24 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.5.1] - 2026-08-30
+
+Patch (pre-1.0: minor = breaking, patch = compatible). Test corpus only —
+no engine, schema or API change.
+
+### Added
+- `tests/golden/rules/avito/` — the Avito autoload rule corpus emitted by
+  `stapel-avito-import --emit-rule-cases` (stapel-tools 0.57.1): 3890
+  distinct rules (1185 parsed from dependency prose, 2705 derived from
+  `values_by_group`), each with a `match` and a `nomatch` value set whose
+  `expect` is recorded by the Python evaluator. Effects covered: require 153,
+  show 1020, hide 12, forbid_option 2689, limit 16. Two compact array files
+  (`prose.json`, `values-by-group.json`) rather than one file per case, so the
+  corpus stays at ~12 MB uncompressed; `tests/test_rules_golden.py` runs every
+  polarity and asserts the two polarities disagree on the owned feature. The
+  TypeScript mirror in @stapel/attributes-react copies these files verbatim
+  and runs the same expectations.
+
 ## [0.5.0] - 2026-08-30
 
 **Minor = breaking** (pre-1.0). Slice S1 of the attributes-v2 architecture:

@@ -38,10 +38,13 @@ except ImportError:  # pragma: no cover - exercised only without the test dep
 def _corpus_rules():
     """Every rule authored anywhere in the golden corpus, with its case id."""
     for path in sorted(RULES_DIR.rglob("*.json")):
-        case = json.loads(path.read_text())
-        for feature in case["features"]:
-            for rule in feature.get("rules", []):
-                yield f"{path.stem}:{feature['slug']}", rule
+        loaded = json.loads(path.read_text())
+        # cases/ and pipeline/ hold one case per file; avito/ holds an array.
+        cases = loaded if isinstance(loaded, list) else [loaded]
+        for case in cases:
+            for feature in case["features"]:
+                for rule in feature.get("rules", []):
+                    yield f"{path.stem}:{case['id']}:{feature['slug']}", rule
 
 
 def _validate_rule(rule: dict) -> None:
