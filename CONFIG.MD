@@ -20,6 +20,7 @@ setting of the same name → environment variable → the default below.
 | Key | Source | Purpose | Required | Default |
 |-----|--------|---------|----------|---------|
 | EXTRA_TYPES | env | extra feature types MERGED over the built-ins (dotted paths to a BaseFeatureType subclass or a registering module). | no | [] |
+| VOCABULARY_RESOLVER | env | dotted path to the `VocabularyResolver` the `ref_select` / `ref_hierarchical_select` types validate codes against (a class is instantiated on first use). Resolved lazily; a runtime `register_vocabulary_resolver()` wins over it. Without either, a ref-type **config** fails validation loudly. | no | None |
 | ADMIN_LOCALES | env | extra/override admin locales MERGED over built-in en+ru (lang → static path or inline dict). | no | {} |
 | ADMIN_WIDGETS | env | override the Django config widget per use, MERGED (name → dotted path). | no | {} |
 | ADMIN_EXTRA_CSS | env | extra CSS assets appended to the widget Media. | no | [] |

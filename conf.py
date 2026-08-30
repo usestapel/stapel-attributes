@@ -15,6 +15,11 @@ attributes_settings = AppSettings(
         # or a module whose import registers types via @register_feature_type.
         # Loaded lazily on first registry access; loading is additive.
         "EXTRA_TYPES": [],
+        # Dotted path to the vocabulary resolver the ref-types validate
+        # against (a VocabularyResolver instance or a class instantiated on
+        # first use). Resolved lazily; a runtime
+        # ``register_vocabulary_resolver()`` wins over this.
+        "VOCABULARY_RESOLVER": None,
         # ---- Admin UI seams (docs/attributes-admin-ui.md §4) ----
         # Extra/override admin locales, MERGED over built-in en+ru. Each entry
         # maps a language code to a static path or an inline {key: text} dict;
@@ -27,7 +32,7 @@ attributes_settings = AppSettings(
         "ADMIN_EXTRA_CSS": [],
         "ADMIN_EXTRA_JS": [],
     },
-    import_strings=(),
+    import_strings=("VOCABULARY_RESOLVER",),
 )
 
 __all__ = ["attributes_settings"]
