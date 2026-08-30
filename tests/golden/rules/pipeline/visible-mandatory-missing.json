@@ -1,0 +1,67 @@
+{
+  "expect": {
+    "dao": [
+      "condition"
+    ],
+    "results": {
+      "condition": {
+        "error": null,
+        "status": "ok"
+      },
+      "screen_state": {
+        "error": "mandatory_missing",
+        "status": "validation_failed"
+      }
+    },
+    "valid": false
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "used"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "screen_state"
+    }
+  ],
+  "id": "visible-mandatory-missing",
+  "note": "a shown feature made required by a rule reports mandatory_missing",
+  "values": {
+    "condition": [
+      "used"
+    ]
+  }
+}

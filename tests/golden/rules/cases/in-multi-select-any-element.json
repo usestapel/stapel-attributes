@@ -1,0 +1,72 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "tags": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "a",
+            "value": "a"
+          },
+          {
+            "label": "b",
+            "value": "b"
+          },
+          {
+            "label": "c",
+            "value": "c"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "tags"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "tags",
+                "op": "in",
+                "values": [
+                  "c"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "in-multi-select-any-element",
+  "note": "in matches when any selected element is listed",
+  "values": {
+    "tags": [
+      "a",
+      "c"
+    ]
+  }
+}

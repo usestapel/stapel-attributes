@@ -1,0 +1,88 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "min_order": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "wholesale": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "type": "bool"
+      },
+      "slug": "wholesale"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "used"
+                ]
+              },
+              {
+                "feature": "wholesale",
+                "op": "in",
+                "values": [
+                  "true"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "min_order"
+    }
+  ],
+  "id": "all-one-cond-fails",
+  "note": "all: one failing condition is enough to not match",
+  "values": {
+    "condition": [
+      "used"
+    ],
+    "wholesale": false
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "weight": {
+      "forbidden_options": [],
+      "max": 20,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "max": 100,
+        "min": 1,
+        "type": "int"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "limit",
+          "max": 50,
+          "min": 5,
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "used"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "effect": "limit",
+          "max": 20,
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "filled"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "weight"
+    }
+  ],
+  "id": "limit-last-matching-wins",
+  "note": "limits replace, they do not intersect",
+  "values": {
+    "condition": [
+      "used"
+    ]
+  }
+}

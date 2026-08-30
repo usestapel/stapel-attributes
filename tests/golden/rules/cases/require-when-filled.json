@@ -1,0 +1,52 @@
+{
+  "expect": {
+    "brand": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "model": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "slug": "brand"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "brand",
+                "op": "filled"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "model"
+    }
+  ],
+  "id": "require-when-filled",
+  "note": "filled fires on any non-empty reading",
+  "values": {
+    "brand": "Apple"
+  }
+}

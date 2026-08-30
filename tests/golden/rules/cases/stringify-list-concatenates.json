@@ -1,0 +1,68 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "tags": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "a",
+            "value": "a"
+          },
+          {
+            "label": "b",
+            "value": "b"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "tags"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "tags",
+                "op": "in",
+                "values": [
+                  "b"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "stringify-list-concatenates",
+  "note": "a list stringifies element by element",
+  "values": {
+    "tags": [
+      "a",
+      "b"
+    ]
+  }
+}

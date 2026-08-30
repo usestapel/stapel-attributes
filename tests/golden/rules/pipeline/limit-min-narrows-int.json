@@ -1,0 +1,72 @@
+{
+  "expect": {
+    "dao": [
+      "condition",
+      "weight"
+    ],
+    "results": {
+      "condition": {
+        "error": null,
+        "status": "ok"
+      },
+      "weight": {
+        "error": "below_minimum",
+        "status": "validation_failed"
+      }
+    },
+    "valid": false
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "max": 100,
+        "min": 1,
+        "type": "int"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "limit",
+          "min": 40,
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "weight"
+    }
+  ],
+  "id": "limit-min-narrows-int",
+  "note": "a limit rule tightens the int min, so the value is below_minimum",
+  "values": {
+    "condition": [
+      "new"
+    ],
+    "weight": 5
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "screen_state": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "hide",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "screen_state"
+    }
+  ],
+  "id": "hide-when-in-no-match",
+  "note": "a hide rule that does not match leaves the feature visible",
+  "values": {
+    "condition": [
+      "used"
+    ]
+  }
+}

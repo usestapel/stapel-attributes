@@ -1,0 +1,72 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "screen_state": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          },
+          {
+            "label": "broken",
+            "value": "broken"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "used",
+                  "broken"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "screen_state"
+    }
+  ],
+  "id": "in-multiple-values",
+  "note": "in matches any listed value",
+  "values": {
+    "condition": [
+      "broken"
+    ]
+  }
+}

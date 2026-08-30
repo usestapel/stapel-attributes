@@ -1,0 +1,51 @@
+{
+  "expect": {
+    "min_order": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "wholesale": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "bool"
+      },
+      "slug": "wholesale"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "wholesale",
+                "op": "empty"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "min_order"
+    }
+  ],
+  "id": "empty-on-false-bool",
+  "note": "…so empty does not match a False bool",
+  "values": {
+    "wholesale": false
+  }
+}

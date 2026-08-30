@@ -1,0 +1,81 @@
+{
+  "expect": {
+    "dao": [
+      "condition",
+      "delivery"
+    ],
+    "results": {
+      "condition": {
+        "error": null,
+        "status": "ok"
+      },
+      "delivery": {
+        "error": null,
+        "status": "ok"
+      }
+    },
+    "valid": true
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "options": [
+          {
+            "label": "pickup",
+            "value": "pickup"
+          },
+          {
+            "label": "post",
+            "value": "post"
+          }
+        ],
+        "type": "select"
+      },
+      "rules": [
+        {
+          "effect": "forbid_option",
+          "option": "post",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "delivery"
+    }
+  ],
+  "id": "forbidden-option-other-passes",
+  "note": "the surviving option still validates",
+  "values": {
+    "condition": [
+      "new"
+    ],
+    "delivery": [
+      "pickup"
+    ]
+  }
+}

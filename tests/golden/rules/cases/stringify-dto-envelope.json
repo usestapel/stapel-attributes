@@ -1,0 +1,57 @@
+{
+  "expect": {
+    "min_order": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "wholesale": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "bool"
+      },
+      "slug": "wholesale"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "wholesale",
+                "op": "in",
+                "values": [
+                  "true"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "min_order"
+    }
+  ],
+  "id": "stringify-dto-envelope",
+  "note": "a {type, value} envelope is unwrapped",
+  "values": {
+    "wholesale": {
+      "type": "bool",
+      "value": true
+    }
+  }
+}

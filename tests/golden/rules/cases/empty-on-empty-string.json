@@ -1,0 +1,52 @@
+{
+  "expect": {
+    "brand": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "model": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "slug": "brand"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "brand",
+                "op": "empty"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "model"
+    }
+  ],
+  "id": "empty-on-empty-string",
+  "note": "the empty string reads as empty",
+  "values": {
+    "brand": ""
+  }
+}

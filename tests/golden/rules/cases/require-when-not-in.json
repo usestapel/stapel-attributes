@@ -1,0 +1,67 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "screen_state": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "not_in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "screen_state"
+    }
+  ],
+  "id": "require-when-not-in",
+  "note": "not_in fires on any other value",
+  "values": {
+    "condition": [
+      "used"
+    ]
+  }
+}

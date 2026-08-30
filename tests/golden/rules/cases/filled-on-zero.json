@@ -1,0 +1,54 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "stock": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "max": 100,
+        "min": 0,
+        "type": "int"
+      },
+      "mandatory": false,
+      "slug": "stock"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "stock",
+                "op": "filled"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "filled-on-zero",
+  "note": "0 is filled — it stringifies to '0'",
+  "values": {
+    "stock": 0
+  }
+}

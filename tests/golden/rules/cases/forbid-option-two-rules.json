@@ -1,0 +1,97 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "delivery": {
+      "forbidden_options": [
+        "courier",
+        "post"
+      ],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "pickup",
+            "value": "pickup"
+          },
+          {
+            "label": "courier",
+            "value": "courier"
+          },
+          {
+            "label": "post",
+            "value": "post"
+          }
+        ],
+        "type": "select"
+      },
+      "rules": [
+        {
+          "effect": "forbid_option",
+          "option": "post",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "effect": "forbid_option",
+          "option": "courier",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "filled"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "delivery"
+    }
+  ],
+  "id": "forbid-option-two-rules",
+  "note": "two matching forbid_option rules accumulate",
+  "values": {
+    "condition": [
+      "new"
+    ]
+  }
+}

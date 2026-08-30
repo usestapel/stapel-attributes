@@ -1,0 +1,41 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "absent",
+                "op": "in",
+                "values": [
+                  "x"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "unknown-controlling-slug-in",
+  "note": "a controlling slug outside the set reads as empty, so `in` cannot match",
+  "values": {
+    "absent": "x"
+  }
+}

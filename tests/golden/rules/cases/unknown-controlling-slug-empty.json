@@ -1,0 +1,38 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "absent",
+                "op": "empty"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "unknown-controlling-slug-empty",
+  "note": "…and `empty` therefore always matches for it",
+  "values": {
+    "absent": "x"
+  }
+}

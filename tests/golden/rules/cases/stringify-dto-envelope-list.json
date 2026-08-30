@@ -1,0 +1,71 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "tags": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "a",
+            "value": "a"
+          },
+          {
+            "label": "b",
+            "value": "b"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "tags"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "tags",
+                "op": "in",
+                "values": [
+                  "b"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "stringify-dto-envelope-list",
+  "note": "an envelope around a list is unwrapped too",
+  "values": {
+    "tags": {
+      "type": "select",
+      "value": [
+        "a",
+        "b"
+      ]
+    }
+  }
+}

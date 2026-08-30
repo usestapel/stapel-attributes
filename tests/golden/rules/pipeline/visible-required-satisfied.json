@@ -1,0 +1,69 @@
+{
+  "expect": {
+    "dao": [
+      "condition",
+      "screen_state"
+    ],
+    "results": {
+      "condition": {
+        "error": null,
+        "status": "ok"
+      },
+      "screen_state": {
+        "error": null,
+        "status": "ok"
+      }
+    },
+    "valid": true
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "used"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "screen_state"
+    }
+  ],
+  "id": "visible-required-satisfied",
+  "note": "the same rule passes once the value is there",
+  "values": {
+    "condition": [
+      "used"
+    ],
+    "screen_state": "cracked"
+  }
+}

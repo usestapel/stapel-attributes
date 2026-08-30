@@ -1,0 +1,94 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "delivery": {
+      "forbidden_options": [
+        "post"
+      ],
+      "max": 1,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "options": [
+          {
+            "label": "pickup",
+            "value": "pickup"
+          },
+          {
+            "label": "post",
+            "value": "post"
+          }
+        ],
+        "type": "select"
+      },
+      "rules": [
+        {
+          "effect": "forbid_option",
+          "option": "post",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "effect": "limit",
+          "max": 1,
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "delivery"
+    }
+  ],
+  "id": "forbid-and-limit-together",
+  "note": "one feature can collect a forbidden option and a limit",
+  "values": {
+    "condition": [
+      "new"
+    ]
+  }
+}

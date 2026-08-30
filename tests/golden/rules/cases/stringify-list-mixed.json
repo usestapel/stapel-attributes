@@ -1,0 +1,58 @@
+{
+  "expect": {
+    "mixed": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "slug": "mixed"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "mixed",
+                "op": "in",
+                "values": [
+                  "true"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "stringify-list-mixed",
+  "note": "a mixed list stringifies each element by its own rule",
+  "values": {
+    "mixed": [
+      1,
+      true,
+      "x"
+    ]
+  }
+}

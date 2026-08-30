@@ -1,0 +1,71 @@
+{
+  "expect": {
+    "availability": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "lead_time": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": false
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "in_stock",
+            "value": "in_stock"
+          },
+          {
+            "label": "on_order",
+            "value": "on_order"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "availability"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "show",
+          "when": {
+            "any": [
+              {
+                "feature": "availability",
+                "op": "empty"
+              },
+              {
+                "feature": "availability",
+                "op": "in",
+                "values": [
+                  "in_stock"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "lead_time"
+    }
+  ],
+  "id": "any-empty-or-in-other-value",
+  "note": "same rule, a value outside the list",
+  "values": {
+    "availability": [
+      "on_order"
+    ]
+  }
+}

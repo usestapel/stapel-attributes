@@ -1,0 +1,55 @@
+{
+  "expect": {
+    "brand": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "model": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "slug": "brand"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "brand",
+                "op": "in",
+                "values": [
+                  "Apple"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "model"
+    }
+  ],
+  "id": "stringify-string-not-trimmed",
+  "note": "a string is never trimmed",
+  "values": {
+    "brand": " Apple "
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "expect": {
+    "blob": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "type": "string"
+      },
+      "slug": "blob"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "blob",
+                "op": "empty"
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "stringify-dict-without-value",
+  "note": "a dict with no 'value' key reads as empty",
+  "values": {
+    "blob": {
+      "other": 1
+    }
+  }
+}

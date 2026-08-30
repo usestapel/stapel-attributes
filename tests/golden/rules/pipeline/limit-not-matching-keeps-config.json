@@ -1,0 +1,72 @@
+{
+  "expect": {
+    "dao": [
+      "condition",
+      "weight"
+    ],
+    "results": {
+      "condition": {
+        "error": null,
+        "status": "ok"
+      },
+      "weight": {
+        "error": null,
+        "status": "ok"
+      }
+    },
+    "valid": true
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "max": 100,
+        "min": 1,
+        "type": "int"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "limit",
+          "max": 10,
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "used"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "weight"
+    }
+  ],
+  "id": "limit-not-matching-keeps-config",
+  "note": "an unmatched limit rule leaves the declared bounds alone",
+  "values": {
+    "condition": [
+      "new"
+    ],
+    "weight": 42
+  }
+}

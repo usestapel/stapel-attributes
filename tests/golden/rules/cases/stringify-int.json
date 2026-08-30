@@ -1,0 +1,57 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "year": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "max": 2100,
+        "min": 1900,
+        "type": "int"
+      },
+      "mandatory": false,
+      "slug": "year"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "year",
+                "op": "in",
+                "values": [
+                  "2024"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "stringify-int",
+  "note": "an integer stringifies without decimals",
+  "values": {
+    "year": 2024
+  }
+}

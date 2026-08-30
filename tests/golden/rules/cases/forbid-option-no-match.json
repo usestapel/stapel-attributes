@@ -1,0 +1,82 @@
+{
+  "expect": {
+    "condition": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    },
+    "delivery": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "new",
+            "value": "new"
+          },
+          {
+            "label": "used",
+            "value": "used"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "condition"
+    },
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "pickup",
+            "value": "pickup"
+          },
+          {
+            "label": "courier",
+            "value": "courier"
+          },
+          {
+            "label": "post",
+            "value": "post"
+          }
+        ],
+        "type": "select"
+      },
+      "rules": [
+        {
+          "effect": "forbid_option",
+          "option": "post",
+          "when": {
+            "all": [
+              {
+                "feature": "condition",
+                "op": "in",
+                "values": [
+                  "new"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "delivery"
+    }
+  ],
+  "id": "forbid-option-no-match",
+  "note": "a forbid_option rule that does not match forbids nothing",
+  "values": {
+    "condition": [
+      "used"
+    ]
+  }
+}

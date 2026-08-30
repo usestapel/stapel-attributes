@@ -1,0 +1,72 @@
+{
+  "expect": {
+    "note": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": true,
+      "visible": true
+    },
+    "tags": {
+      "forbidden_options": [],
+      "max": null,
+      "min": null,
+      "required": false,
+      "visible": true
+    }
+  },
+  "features": [
+    {
+      "config": {
+        "maxSelected": 1,
+        "options": [
+          {
+            "label": "a",
+            "value": "a"
+          },
+          {
+            "label": "b",
+            "value": "b"
+          },
+          {
+            "label": "c",
+            "value": "c"
+          }
+        ],
+        "type": "select"
+      },
+      "slug": "tags"
+    },
+    {
+      "config": {
+        "type": "string"
+      },
+      "mandatory": false,
+      "rules": [
+        {
+          "effect": "require",
+          "when": {
+            "all": [
+              {
+                "feature": "tags",
+                "op": "not_in",
+                "values": [
+                  "c"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "slug": "note"
+    }
+  ],
+  "id": "not-in-multi-select",
+  "note": "not_in is the negation of in over the whole reading",
+  "values": {
+    "tags": [
+      "a",
+      "b"
+    ]
+  }
+}
