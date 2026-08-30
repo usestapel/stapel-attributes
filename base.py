@@ -14,8 +14,8 @@ stapel-categories module), never ORM instances.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields, is_dataclass
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from dataclasses import dataclass, field as dataclass_field, fields, is_dataclass
+from typing import Any, Dict, Generic, List, Mapping, Optional, Sequence, Type, TypeVar, Union
 
 from rest_framework import serializers
 from rest_framework_dataclasses.serializers import DataclassSerializer
@@ -145,10 +145,23 @@ class FeatureDef:
             (or an already-parsed Config dataclass).
         id: Optional stable identifier (also accepted as a payload key).
         name: Display name / translation key (defaults to ``slug``).
-        mandatory: Whether a value is required.
+        mandatory: Whether a value is *statically* required. Conditional
+            requirement comes from ``rules`` (effect ``require``).
         show_at_title: Whether the value is shown in the listing title.
         show_as_badge: Whether the value is shown as a badge.
         translate: Translation mode ('all' | 'title' | 'none').
+        rules: Conditional rules (raw dicts in the closed grammar of
+            ``stapel_attributes.rules``, parsed on demand by ``parse_rules``).
+            A sibling of ``mandatory``, never part of ``config``: a rule is
+            type-independent, while ``config`` is parsed per type.
+        description: Help text under the field; translation key or literal.
+        example: Placeholder text; translation key or literal.
+        default: Value the form starts with, in ``DTO.value`` shape (for a
+            select, a list of option codes).
+        hints: ``[{"title": ..., "content": ...}]`` notices rendered with the
+            field; translation keys or literals.
+        group: Form section this feature belongs to; section order is the
+            order of first appearance. Never stored in a submitted value.
     """
     slug: str
     config: Union[Dict[str, Any], Any]
@@ -158,6 +171,12 @@ class FeatureDef:
     show_at_title: bool = False
     show_as_badge: bool = False
     translate: str = 'all'
+    rules: List[Dict[str, Any]] = dataclass_field(default_factory=list)
+    description: Optional[str] = None
+    example: Optional[str] = None
+    default: Any = None
+    hints: List[Dict[str, str]] = dataclass_field(default_factory=list)
+    group: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.name is None:
@@ -167,10 +186,12 @@ class FeatureDef:
     def from_dict(cls, data: Dict[str, Any], slug: Optional[str] = None) -> 'FeatureDef':
         """Build a FeatureDef from a plain dict (e.g. a comm-function payload).
 
-        Accepted keys: ``slug``, ``config``, ``id``, ``name``, ``mandatory``,
-        ``show_at_title``, ``show_as_badge``, ``translate``. Unknown keys are
-        ignored. ``slug`` may alternatively be supplied as an argument (mapping
-        form ``{slug: {...}}``).
+        Every declared field is accepted by name (``slug``, ``config``, ``id``,
+        ``name``, ``mandatory``, ``show_at_title``, ``show_as_badge``,
+        ``translate``, ``rules``, ``description``, ``example``, ``default``,
+        ``hints``, ``group``); unknown keys are ignored. ``slug`` may
+        alternatively be supplied as an argument (mapping form
+        ``{slug: {...}}``).
         """
         resolved_slug = data.get('slug') or slug
         if not resolved_slug:
@@ -180,6 +201,23 @@ class FeatureDef:
         if 'config' not in kwargs:
             raise ValueError(f"FeatureDef '{resolved_slug}' requires a 'config'")
         return cls(slug=str(resolved_slug), **kwargs)
+
+
+@dataclass
+class ValidationContext:
+    """The sibling values a type may need to validate one value.
+
+    Passed to :meth:`BaseFeatureType.validate_dto_in_context` by the pipeline.
+    Almost every type ignores it — it exists for values whose validity depends
+    on another field (``ref_select`` narrowing its vocabulary level by the
+    parent feature's selection).
+
+    Attributes:
+        values: The whole submitted payload, ``{slug: raw or DTO envelope}``.
+        feature_defs: The feature definitions the payload is validated against.
+    """
+    values: Mapping[str, Any]
+    feature_defs: Sequence['FeatureDef']
 
 
 class BaseFeatureType(ABC, Generic[TConfig, TDto, TDao]):
@@ -247,6 +285,23 @@ class BaseFeatureType(ABC, Generic[TConfig, TDto, TDao]):
         """
         pass
 
+    def validate_dto_in_context(
+        self,
+        config: TConfig,
+        dto: TDto,
+        context: ValidationContext,
+    ) -> None:
+        """Validate a DTO knowing the rest of the submitted payload.
+
+        The pipeline calls this, not :meth:`validate_dto`; the default simply
+        delegates, so a type that needs no siblings notices nothing. Override
+        only when validity genuinely depends on another field.
+
+        Raises:
+            FeatureValidationError: If DTO data is invalid.
+        """
+        self.validate_dto(config, dto)
+
     @abstractmethod
     def dto_to_dao(self, config: TConfig, dto: TDto, feature: FeatureDef) -> TDao:
         """
@@ -272,7 +327,7 @@ class BaseFeatureType(ABC, Generic[TConfig, TDto, TDao]):
         Python is the source of truth for the config-form schema
         (docs/attributes-admin-ui.md decision 1): the admin JS renders the form
         from this declaration, so a type using only the standard field-kinds
-        needs zero JS. The nine built-ins resolve their ported declaration by
+        needs zero JS. The declaring built-ins resolve their declaration by
         slug from ``config_form.BUILTIN_FORMS``; host-registered types override
         this to declare their own fields (or return ``[]`` and ship a custom JS
         config widget). Kinds must be keys of ``config_form.FIELD_KINDS``.
@@ -371,5 +426,6 @@ __all__ = [
     'DaoMeta',
     'DictDataclassSerializer',
     'FeatureDef',
+    'ValidationContext',
     'dataclass_to_dict_no_none',
 ]
