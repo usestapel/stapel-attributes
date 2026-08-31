@@ -18,6 +18,7 @@ from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.results import ValidationErrorCode, ValidationStatus
 from stapel_attributes.validation import (
     build_feature_lookup,
+    is_blank_value,
     coerce_feature_defs,
     get_feature_slug,
     normalize_to_dao,
@@ -451,3 +452,95 @@ class TestValidateDescription:
         result = validate_description("abcdef", min_length=2, max_length=5, slug="title")
         assert result is not None
         assert result.slug == "title"
+
+
+# --------------------------------------------------------------------------- #
+# "Answered" vs "true-ish" — the one predicate `mandatory` fires on
+# --------------------------------------------------------------------------- #
+
+class TestAnsweredSemantics:
+    """`is_blank_value` and its three call sites.
+
+    Provoked by a client fleet's live storefront run of 2026-08-31: the Avito
+    import gave «Коробка запечатана» — a `select {Да, Нет}` with
+    `required: true` at source — to the composer as a `bool`, and a seller who
+    meant «Нет» could not publish. The engine's own half of that has to be nailed down and kept
+    nailed: an answered `False` is an ANSWER, on every path, and the rule that
+    says so lived as an unnamed literal in three places.
+    """
+
+    ANSWERED = [
+        ('bool', {'type': 'bool'}, False),
+        ('bool', {'type': 'bool'}, True),
+        ('int', {'type': 'int'}, 0),
+        ('float', {'type': 'float'}, 0.0),
+        ('string', {'type': 'string'}, '0'),
+        ('date', {'type': 'date', 'precision': 'date'}, 0),
+        ('select', {'type': 'select', 'options': [{'value': 'a', 'label': 'A'}],
+                    'minSelected': 0, 'maxSelected': 1}, ['a']),
+    ]
+    BLANK = [
+        ('bool', {'type': 'bool'}, None),
+        ('int', {'type': 'int'}, None),
+        ('string', {'type': 'string'}, ''),
+        ('string', {'type': 'string'}, None),
+        ('select', {'type': 'select', 'options': [{'value': 'a', 'label': 'A'}],
+                    'minSelected': 0, 'maxSelected': 1}, []),
+    ]
+
+    def test_the_predicate_itself(self):
+        assert [is_blank_value(v) for v in (None, '', [])] == [True, True, True]
+        # every kind's ZERO value is an answer, not a blank
+        assert [is_blank_value(v) for v in (False, True, 0, 0.0, '0', [0], {})] == [False] * 7
+
+    @pytest.mark.parametrize("kind,config,value", ANSWERED)
+    def test_a_mandatory_feature_accepts_its_zero_value(self, kind, config, value):
+        configs = [FeatureDef(slug="f", id=1, config=config, mandatory=True)]
+        payload = {"f": {"type": kind, "value": value}}
+
+        result = validate_dto_structured(configs, payload)
+        assert result.valid is True, [r.message for r in result.results]
+
+        validate_dto(configs, payload)                    # raises on refusal
+
+        dao = normalize_to_dao(configs, payload)
+        assert dao["f"]["value"] == value                 # and it REACHES the DAO
+
+    @pytest.mark.parametrize("kind,config,value", BLANK)
+    def test_a_mandatory_feature_refuses_a_blank(self, kind, config, value):
+        configs = [FeatureDef(slug="f", id=1, config=config, mandatory=True)]
+        payload = {"f": {"type": kind, "value": value}}
+
+        result = validate_dto_structured(configs, payload)
+        assert result.valid is False
+        assert result.results[0].error == ValidationErrorCode.MANDATORY_MISSING
+
+        with pytest.raises(ValidationError):
+            validate_dto(configs, payload)
+
+        assert "f" not in normalize_to_dao(configs, payload)
+
+    def test_an_answered_false_satisfies_a_require_RULE_not_only_mandatory(self):
+        """The shape §С5 actually hit: `box_sealed` is required by a rule
+        («Состояние» = «Новое»), not by the static flag."""
+        configs = [
+            FeatureDef(slug="condition", id=1,
+                       config={"type": "select",
+                               "options": [{"value": "novoe", "label": "Новое"},
+                                           {"value": "b-u", "label": "Б/у"}],
+                               "minSelected": 0, "maxSelected": 1}),
+            FeatureDef(slug="box_sealed", id=2, config={"type": "bool"}, rules=[
+                {"effect": "require",
+                 "when": {"all": [{"feature": "condition", "op": "in",
+                                   "values": ["novoe"]}]}}]),
+        ]
+        answered_no = {"condition": {"type": "select", "value": ["novoe"]},
+                       "box_sealed": {"type": "bool", "value": False}}
+        assert validate_dto_structured(configs, answered_no).valid is True
+        assert normalize_to_dao(configs, answered_no)["box_sealed"]["value"] is False
+
+        never_answered = {"condition": {"type": "select", "value": ["novoe"]}}
+        refused = validate_dto_structured(configs, never_answered)
+        assert refused.valid is False
+        assert [r.error for r in refused.results if r.error] == [
+            ValidationErrorCode.MANDATORY_MISSING]

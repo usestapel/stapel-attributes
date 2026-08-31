@@ -1,6 +1,6 @@
 {
   "module": "stapel-attributes",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
   "axes": [
     {
@@ -300,6 +300,16 @@
       "kind": "factory",
       "path": "stapel_attributes.validation.get_feature_slug",
       "intent": "The slug/name/id fallback used to key a feature definition against an incoming payload — use this everywhere a FeatureDef needs a lookup key so the fallback order stays identical across every caller instead of being re-derived ad hoc per call site."
+    },
+    {
+      "name": "is_blank_value",
+      "kind": "predicate",
+      "path": "stapel_attributes.validation.is_blank_value",
+      "intent": "\"Was this feature answered at all?\" — the ONE definition of blankness the mandatory checks fire on (None / '' / []). Call it wherever a product decides whether an answer is present, because a falsiness check is wrong for every kind that has a zero value: an answered False is an answer for a bool, 0 is an answer for an int, and the Unix epoch is an answer for a date.",
+      "instead_of": [
+        "`if not value:`",
+        "a hand-rolled `value in (None, '', [])`"
+      ]
     },
     {
       "name": "normalize_to_dao",

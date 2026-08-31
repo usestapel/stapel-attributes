@@ -1,23 +1,50 @@
 {
   "_comment": "Curated layer for the `surface` section of docs/capabilities.json (discoverability-design.md, stapel-catalog sweep). NOTE the honest boundary: capabilities.json itself is otherwise still HAND-WRITTEN — this L1 library has no gate registry and no docs/schema.json (no HTTP surface of its own), so provides/axes/extension_points/requires are curated prose, not derived. `make contract` patches in the two derivable things: module/version from pyproject and the derived `surface`. This module IS almost entirely surface (a typed-attribute engine with no models/views/urls of its own) — the whole point of stapel-attributes is that stapel-categories and stapel-listings call these functions instead of writing their own type dispatch, validation, normalization and formatting. registry.py/validation.py/config_form.py/profile_bridge.py/widgets.py/serializers.py/base.py are exactly the module-level public functions already locked down by tests/test_public_api.py's __all__ check — surface_roots select the same set, so a new public function in one of these files fails `make contract` until it carries an intent line here.",
-
   "surface_roots": [
-    {"select": "functions", "path": "registry.py"},
-    {"select": "functions", "path": "validation.py"},
-    {"select": "functions", "path": "config_form.py"},
-    {"select": "functions", "path": "profile_bridge.py"},
-    {"select": "functions", "path": "widgets.py"},
-    {"select": "functions", "path": "serializers.py"},
-    {"select": "functions", "path": "base.py"},
-    {"select": "functions", "path": "rules.py"},
-    {"select": "functions", "path": "vocabularies.py"}
+    {
+      "select": "functions",
+      "path": "registry.py"
+    },
+    {
+      "select": "functions",
+      "path": "validation.py"
+    },
+    {
+      "select": "functions",
+      "path": "config_form.py"
+    },
+    {
+      "select": "functions",
+      "path": "profile_bridge.py"
+    },
+    {
+      "select": "functions",
+      "path": "widgets.py"
+    },
+    {
+      "select": "functions",
+      "path": "serializers.py"
+    },
+    {
+      "select": "functions",
+      "path": "base.py"
+    },
+    {
+      "select": "functions",
+      "path": "rules.py"
+    },
+    {
+      "select": "functions",
+      "path": "vocabularies.py"
+    }
   ],
-
   "surface": {
     "register_feature_type": {
       "kind": "factory",
       "intent": "Register a custom BaseFeatureType (decorator or direct call) from a host AppConfig.ready() to add a domain-specific attribute type without forking the registry — the fork-free way in, alternative to declaring EXTRA_TYPES when the type class already lives in the calling module.",
-      "instead_of": ["a bespoke if/elif type-dispatch chain in place of the open registry"]
+      "instead_of": [
+        "a bespoke if/elif type-dispatch chain in place of the open registry"
+      ]
     },
     "registry_version": {
       "kind": "factory",
@@ -30,7 +57,9 @@
     "get_feature_type": {
       "kind": "factory",
       "intent": "Look up one feature type instance by its config 'type' slug, raising ValueError with the full available list on an unknown slug. This is the one lookup every consumer (categories' admin.py, listings) uses instead of hardcoding a slug->class dict.",
-      "instead_of": ["a hand-rolled dict of type slug -> handler class"]
+      "instead_of": [
+        "a hand-rolled dict of type slug -> handler class"
+      ]
     },
     "get_all_feature_types": {
       "kind": "factory",
@@ -39,12 +68,16 @@
     "get_all_type_slugs": {
       "kind": "factory",
       "intent": "Sorted list of every registered type slug — use this to populate a ChoiceField/dropdown of available attribute types instead of hardcoding the nine built-in names, since a host's EXTRA_TYPES entry would silently be missing from a hardcoded list.",
-      "instead_of": ["a hardcoded list/tuple of type-slug choices"]
+      "instead_of": [
+        "a hardcoded list/tuple of type-slug choices"
+      ]
     },
     "parse_config": {
       "kind": "factory",
       "intent": "Turn a raw config dict (with its 'type' discriminator) into the typed config dataclass for that type, validating shape via the type's own config_serializer_class along the way. Reach for this whenever you need typed field access (config.min, config.options, ...) instead of dict.get() with manual type coercion.",
-      "instead_of": ["dict.get()-based ad hoc access to a config's fields"]
+      "instead_of": [
+        "dict.get()-based ad hoc access to a config's fields"
+      ]
     },
     "parse_dto": {
       "kind": "factory",
@@ -77,7 +110,9 @@
     "format_feature_value": {
       "kind": "factory",
       "intent": "Render a DAO value as a display string per its type's own formatting rules (units, prefix/postfix, options label lookup, ...). Reach for this wherever a feature value is shown to a human (listing title, badge, admin list) instead of str(value), which drops every type's formatting.",
-      "instead_of": ["str(value) / manual per-type display formatting"]
+      "instead_of": [
+        "str(value) / manual per-type display formatting"
+      ]
     },
     "collect_translation_keys_for_feature": {
       "kind": "factory",
@@ -90,7 +125,9 @@
     "coerce_feature_defs": {
       "kind": "factory",
       "intent": "Normalize the three accepted 'configs' shapes (FeatureDef iterable, feature-def-dict iterable, or a {slug: ...} mapping) into one canonical List[FeatureDef], order-preserving. Every entry point into the validation pipeline takes this shape — call this first instead of writing your own dict/list normalization for whatever shape your caller happens to hand you.",
-      "instead_of": ["ad hoc per-call normalization of dict-vs-list-vs-mapping feature-def input"]
+      "instead_of": [
+        "ad hoc per-call normalization of dict-vs-list-vs-mapping feature-def input"
+      ]
     },
     "get_feature_slug": {
       "kind": "factory",
@@ -103,16 +140,28 @@
     "validate_dto": {
       "kind": "gate_function",
       "intent": "Raise-style validation of a whole {slug: DTO} payload against a feature-def set: mandatory-missing, not-allowed and per-value errors all collected into one Django ValidationError. Reach for this at a model .clean()/full_clean() boundary that wants a single raised exception rather than a structured result.",
-      "instead_of": ["a hand-written per-feature validation loop with Django ValidationError"]
+      "instead_of": [
+        "a hand-written per-feature validation loop with Django ValidationError"
+      ]
     },
     "normalize_to_dao": {
       "kind": "factory",
       "intent": "The DTO-payload -> stored-DAO-dict transform, including auto-injecting header DAOs from the configs and dropping empty/unsubmitted values. This is what should write a feature-tree's stored JSON field — reimplementing it by hand loses the header-injection and empty-value-drop rules silently.",
-      "instead_of": ["hand-written DTO-to-storage-dict mapping"]
+      "instead_of": [
+        "hand-written DTO-to-storage-dict mapping"
+      ]
     },
     "validate_dto_structured": {
       "kind": "gate_function",
       "intent": "Same DTO validation as validate_dto, but returns a ValidationBatchResult (one FeatureValidationResult per feature, with machine error codes) instead of raising — the one to call from a DRF view/serializer that needs a structured, per-field API error response rather than a single Django exception."
+    },
+    "is_blank_value": {
+      "kind": "predicate",
+      "intent": "\"Was this feature answered at all?\" — the ONE definition of blankness the mandatory checks fire on (None / '' / []). Call it wherever a product decides whether an answer is present, because a falsiness check is wrong for every kind that has a zero value: an answered False is an answer for a bool, 0 is an answer for an int, and the Unix epoch is an answer for a date.",
+      "instead_of": [
+        "`if not value:`",
+        "a hand-rolled `value in (None, '', [])`"
+      ]
     },
     "validate_configs_structured": {
       "kind": "gate_function",
@@ -125,42 +174,59 @@
     "validate_description": {
       "kind": "gate_function",
       "intent": "Generic free-text length check (default 4-500 chars) returning a FeatureValidationResult with a localizable error key, not a raised exception. Use this for any description-like field instead of a bespoke len(text) check or a Django MinLengthValidator/MaxLengthValidator pair, which don't produce the same machine error code + localizable key shape.",
-      "instead_of": ["a hand-rolled len(text) bounds check", "django.core.validators.MinLengthValidator/MaxLengthValidator used standalone"]
+      "instead_of": [
+        "a hand-rolled len(text) bounds check",
+        "django.core.validators.MinLengthValidator/MaxLengthValidator used standalone"
+      ]
     },
     "form_declarations": {
       "kind": "factory",
       "intent": "JSON-serializable snapshot of every registered type's admin config-form declaration (built-ins + EXTRA_TYPES + runtime) — this is what ConfigEditorWidget hands to the client JS. Call it directly only if you are rendering the schema-driven form somewhere other than the built-in widget; otherwise get_config_editor_widget() already wires it for you.",
-      "instead_of": ["hand-writing per-type admin config-form field declarations in JS"]
+      "instead_of": [
+        "hand-writing per-type admin config-form field declarations in JS"
+      ]
     },
     "field_kind_for": {
       "kind": "factory",
       "intent": "Map a stapel-profiles ProfileFieldKind value to the matching config_form.FIELD_KINDS key — the one lookup a shop/classified projection needs when it builds a filterable attribute FROM a profile field, so the mapping is defined once instead of re-derived (or duplicated) per projection.",
-      "instead_of": ["re-deriving the ProfileFieldKind -> FIELD_KINDS mapping per projection"]
+      "instead_of": [
+        "re-deriving the ProfileFieldKind -> FIELD_KINDS mapping per projection"
+      ]
     },
     "get_config_editor_widget": {
       "kind": "factory",
       "intent": "Resolve the Django admin widget for a feature config JSONField, honouring the ADMIN_WIDGETS dotted-path override — use this in a ModelForm/ModelAdmin instead of instantiating ConfigEditorWidget directly, or a host override silently never gets picked up.",
-      "instead_of": ["hardcoding ConfigEditorWidget (or a bespoke forms.Widget) directly in a ModelForm's Meta.widgets"]
+      "instead_of": [
+        "hardcoding ConfigEditorWidget (or a bespoke forms.Widget) directly in a ModelForm's Meta.widgets"
+      ]
     },
     "get_feature_config_serializer_class": {
       "kind": "factory",
       "intent": "The polymorphic DRF serializer class for feature CONFIGS, keyed by the 'type' discriminator and always reflecting the current registry (cached per registry_version). Use this — not a hand-built PolymorphicSerializer subclass — anywhere a config needs (de)serializing across the open type set.",
-      "instead_of": ["a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"]
+      "instead_of": [
+        "a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"
+      ]
     },
     "get_feature_dto_serializer_class": {
       "kind": "factory",
       "intent": "The polymorphic DRF serializer for feature DTOs (client-submitted values), non-strict so unknown/draft types don't crash serialization — the one to mount on any endpoint accepting {type, value} feature payloads.",
-      "instead_of": ["a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"]
+      "instead_of": [
+        "a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"
+      ]
     },
     "get_feature_dao_serializer_class": {
       "kind": "factory",
       "intent": "The polymorphic DRF serializer for stored feature DAOs — the one to mount on any endpoint that reads back the JSONField feature-value storage as structured output.",
-      "instead_of": ["a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"]
+      "instead_of": [
+        "a hand-written drf_polymorphic.serializers.PolymorphicSerializer subclass with a fixed serializer_mapping"
+      ]
     },
     "get_feature_config_proxy_serializer": {
       "kind": "factory",
       "intent": "The drf-spectacular PolymorphicProxySerializer for feature configs, so OpenAPI schema generation emits a proper oneOf+discriminator instead of an opaque object — wire this into your view's @extend_schema, don't build a proxy serializer by hand per project (used directly by stapel-categories' serializers.py).",
-      "instead_of": ["hand-building a drf_spectacular.utils.PolymorphicProxySerializer per project"]
+      "instead_of": [
+        "hand-building a drf_spectacular.utils.PolymorphicProxySerializer per project"
+      ]
     },
     "get_feature_dto_proxy_serializer": {
       "kind": "factory",
@@ -173,22 +239,30 @@
     "parse_rules": {
       "kind": "gate_function",
       "intent": "Parse a feature's raw `rules` into the closed grammar, raising FeatureValidationError(INVALID_RULES) on any deviation. Call this from the model clean()/save path that stores rules, so a malformed rule is rejected where it is authored instead of surfacing later as a rule that silently never matches.",
-      "instead_of": ["ad hoc dict-shape checks over a rules JSON field"]
+      "instead_of": [
+        "ad hoc dict-shape checks over a rules JSON field"
+      ]
     },
     "evaluate_rules": {
       "kind": "factory",
       "intent": "The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half.",
-      "instead_of": ["reading FeatureDef.mandatory as if it were the whole requiredness answer"]
+      "instead_of": [
+        "reading FeatureDef.mandatory as if it were the whole requiredness answer"
+      ]
     },
     "narrow_config": {
       "kind": "factory",
       "intent": "Apply a RuleState to a raw config dict type-agnostically (drop forbidden options, replace a declared min/max) before parse_config. This is how rules reach the type plugins without any type knowing rules exist — use it rather than teaching a type about rules or inventing per-type error codes for conditional constraints.",
-      "instead_of": ["per-type conditional logic branching on another feature's value"]
+      "instead_of": [
+        "per-type conditional logic branching on another feature's value"
+      ]
     },
     "stringify": {
       "kind": "factory",
       "intent": "Canonicalize any submitted value (bool, number, string, list, DTO envelope) into the list of strings a rule compares against — the exact table the TypeScript evaluator mirrors. Use it anywhere a feature value must be compared as text, so False, 0 and 2.5 read identically on both sides of the wire.",
-      "instead_of": ["str(value) when comparing a feature value against option codes"]
+      "instead_of": [
+        "str(value) when comparing a feature value against option codes"
+      ]
     },
     "rule_warnings": {
       "kind": "factory",
@@ -197,7 +271,9 @@
     "register_vocabulary_resolver": {
       "kind": "factory",
       "intent": "Register the process-wide VocabularyResolver the ref-types validate term codes against — the fork-free way an app hosting vocabularies in-process (AppConfig.ready()) plugs its own source in, winning over the STAPEL_ATTRIBUTES['VOCABULARY_RESOLVER'] dotted path.",
-      "instead_of": ["inlining thousands of vocabulary terms into a category's feature config"]
+      "instead_of": [
+        "inlining thousands of vocabulary terms into a category's feature config"
+      ]
     },
     "get_vocabulary_resolver": {
       "kind": "factory",
@@ -206,7 +282,9 @@
     "dataclass_to_dict_no_none": {
       "kind": "factory",
       "intent": "Recursively convert a (possibly nested) dataclass into a dict with None-valued fields dropped — the shape every DAO/config must serialize to for storage and API output. Use this instead of dataclasses.asdict(), which keeps None keys and doesn't match the None-omission convention every type plugin here relies on.",
-      "instead_of": ["dataclasses.asdict() (stdlib) — keeps None-valued fields"]
+      "instead_of": [
+        "dataclasses.asdict() (stdlib) — keeps None-valued fields"
+      ]
     }
   }
 }

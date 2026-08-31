@@ -64,6 +64,44 @@ ConfigsInput = Union[
 _VISIBLE = RuleState()
 
 
+def is_blank_value(raw: Any) -> bool:
+    """"Nothing was answered here" — the one predicate ``mandatory`` fires on.
+
+    THREE call sites used to carry this as an inline literal
+    (``raw is None or raw == '' or raw == []``): the pre-1.0 :func:`validate_dto`,
+    :func:`validate_dto_structured`, and the drop in :func:`normalize_to_dao`.
+    Three copies of an unnamed rule is one careless ``if not raw:`` away from
+    a defect that is invisible in review, so it is one named function now, and
+    the per-kind table below is a test rather than folklore.
+
+    **An answer is not the same thing as a true-ish value.** Blankness is the
+    ABSENCE of a value, so exactly three shapes are blank — ``None``, the empty
+    string, the empty list — and every zero value of every kind is an ANSWER:
+
+    ==================  ====================================  =============
+    kind                blank                                 answered
+    ==================  ====================================  =============
+    ``bool``            ``None`` (never submitted)            ``False``, ``True``
+    ``int`` / ``float`` ``None``                              ``0``, ``0.0``
+    ``string``          ``None``, ``''``                      ``'0'``
+    ``select``          ``None``, ``[]``                      ``['x']``
+    ``date``            ``None``                              ``0`` (the epoch)
+    ``hex_color``       ``None``                              ``{'simple': …}``
+    ==================  ====================================  =============
+
+    The ``bool`` row is why this is not a falsiness check: a mandatory «Коробка
+    запечатана» is satisfied by an answered «Нет». (Python makes that row
+    *work* by accident — ``False == ''`` and ``False == []`` are both false —
+    and accidents are what regress; the row is covered by tests on all three
+    call sites.) A bool that was NEVER submitted is still blank: the engine
+    cannot tell an unanswered switch from an answered «no», so the UI that
+    draws a two-state control has to send the answer it is displaying. See
+    ``stapel-react/packages/attributes-react`` — ``isBlank`` there is the
+    mirror of this function.
+    """
+    return raw is None or raw == '' or raw == []
+
+
 def coerce_feature_defs(configs: ConfigsInput) -> List[FeatureDef]:
     """Coerce the accepted *configs* shapes into a list of FeatureDef.
 
@@ -231,8 +269,7 @@ def validate_dto(configs: ConfigsInput, features_dto: Optional[Dict[str, Any]]) 
         # empty value (null / '' / []) is treated as missing — otherwise it
         # normalizes to a valid-but-empty value and is dropped from the DAO.
         raw = submitted_value.get('value') if isinstance(submitted_value, dict) else submitted_value
-        is_empty = raw is None or raw == '' or raw == []
-        if state.get(slug, _VISIBLE).required and (not submitted or is_empty):
+        if state.get(slug, _VISIBLE).required and (not submitted or is_blank_value(raw)):
             errors[slug] = f"Mandatory feature '{feature.name}' is required"
 
     if errors:
@@ -307,10 +344,9 @@ def normalize_to_dao(
         else:
             dto_data = {**dto_data, 'type': config.type}
 
-        # Skip features without value - only include features with actual values in DAO
-        # Also skip empty values (empty string, empty list, None)
-        value = dto_data.get('value')
-        if value is None or value == '' or value == []:
+        # Skip features without an ANSWER — see `is_blank_value` for what that
+        # means per kind. An answered `False` or `0` reaches the DAO.
+        if is_blank_value(dto_data.get('value')):
             continue
 
         # Normalize DTO (returns typed dataclass)
@@ -461,7 +497,7 @@ def validate_dto_structured(
         # drops the empty value — the mandatory feature silently vanishes from
         # the DAO. JS is not the source of truth (docs §4), so reject here.
         raw_value = dto_data.get('value') if isinstance(dto_data, dict) else dto_data
-        is_empty = raw_value is None or raw_value == '' or raw_value == []
+        is_empty = is_blank_value(raw_value)
         if not feature_state.required and is_empty:
             results.append(FeatureValidationResult(
                 id=feature.id,
@@ -851,6 +887,7 @@ def validate_description(
 
 __all__ = [
     'coerce_feature_defs',
+    'is_blank_value',
     'get_feature_slug',
     'build_feature_lookup',
     'validate_dto',

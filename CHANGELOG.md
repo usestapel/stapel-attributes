@@ -4,6 +4,31 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.6.2] - 2026-08-31
+
+### Fixed
+
+- **The "was this answered?" rule was an unnamed literal in three places.**
+  `raw is None or raw == '' or raw == []` was written out inline in
+  `validate_dto`, in `validate_dto_structured` and again in the DAO drop of
+  `normalize_to_dao`. It is now one exported, documented predicate,
+  `validation.is_blank_value`, with a per-kind table and tests on all three
+  call sites.
+
+  Nothing about the OUTCOME changes: an answered `False` was already an answer
+  for a `bool`, `0` for an `int`, the epoch for a `date` — Python makes that
+  true by accident (`False == ''` and `False == []` are both false), and no
+  test said so anywhere. A client fleet's live storefront run of 2026-08-31 put a
+  mandatory «Коробка запечатана» in front of a seller who meant «Нет» and had
+  no way through, so the engine's half of that contract is now stated and
+  gated instead of holding by luck. The seller-facing half was in the data:
+  the field is a `select {Да, Нет}` at source and only became a `bool` in the
+  Avito import (fixed in stapel-tools 0.60.0).
+
+  A `bool` that was never submitted is still blank, and deliberately so — the
+  engine cannot tell an unanswered switch from an answered "no", which is why
+  a UI drawing a two-state control has to send the answer it is displaying.
+
 ## [0.6.1] - 2026-08-31
 
 ### Fixed

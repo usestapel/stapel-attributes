@@ -1,8 +1,8 @@
-# stapel-attributes 0.6.1
+# stapel-attributes 0.6.2
 
 Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
-Contract: axes 1 · surface 43 · extension points 5.
+Contract: axes 1 · surface 44 · extension points 5.
 Generated from docs/capabilities.json by `stapel-llms-txt` — do not edit; drift-gated by `make contract-check`.
 
 ## Configuration axes — what a product switches on
@@ -32,6 +32,10 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   Parse AND run the type's own validate_config() in one call, raising FeatureValidationError with a machine error_code on failure. This is what a category/listing admin save path should call to gate an incoming config — not just parse_config() alone, which skips the type-specific business rules (e.g. min <= max).
 - validate_feature_dto — stapel_attributes.registry.validate_feature_dto
   Normalize AND validate an incoming DTO dict against its config in one call, raising FeatureValidationError on failure. Call this at any boundary that accepts a raw {type, value, ...} payload from a client, instead of normalizing and validating as two separately-forgettable steps.
+### predicate
+- is_blank_value — stapel_attributes.validation.is_blank_value
+  instead of: `if not value:`, a hand-rolled `value in (None, '', [])`
+  "Was this feature answered at all?" — the ONE definition of blankness the mandatory checks fire on (None / '' / []). Call it wherever a product decides whether an answer is present, because a falsiness check is wrong for every kind that has a zero value: an answered False is an answer for a bool, 0 is an answer for an int, and the Unix epoch is an answer for a date.
 ### factory
 - build_feature_lookup — stapel_attributes.validation.build_feature_lookup
   Build the {slug-or-id: FeatureDef} lookup dict plus the ordered feature list in one call — the shared first step of every validate_*/normalize_to_dao entry point; use it instead of writing your own indexing loop over a configs iterable.
