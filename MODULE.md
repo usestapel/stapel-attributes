@@ -36,7 +36,12 @@ Every feature type is four small pieces:
    and its `DictDataclassSerializer`.
 2. **DTO** (`dto.py`) — what the client submits (`{type, value}`).
 3. **DAO** (`dao.py`) — what gets stored: value + display metadata; inherits
-   `DaoMeta` (name/order/title/badge/translate).
+   `DaoMeta` (name/order/title/badge/translate). A type whose value is a *code*
+   (`select`, `ref_select`, `ref_hierarchical_select`) also stores a `labels`
+   snapshot beside `value`, resolved at write time and positionally aligned
+   with it: the projection is the whole contract with a reader, and a card
+   drawing a badge must not have to fetch the category or the vocabulary to
+   find the copy. `value` stays the filter/search axis.
 4. **Handler** (`type.py`) — a `BaseFeatureType[TConfig, TDto, TDao]` subclass
    wiring the three together and implementing:
    - `validate_config(config)` — schema validity (raise `FeatureValidationError` with a `ValidationErrorCode`),

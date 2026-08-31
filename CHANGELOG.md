@@ -4,6 +4,48 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.7.0] — 2026-08-31
+
+### Added
+
+- **A stored `select` had no reachable label, so every reader printed the raw
+  storage slug.** A live classified deployment showed «Состояние: b-u», «Вид
+  объявления: prodayu-svoe», «Датчики: gps», «Состояние экрана: bez-defektov»
+  on a listing page and a result card, and an apartment subtitle read
+  «panelnyy · 5 · 9».
+
+  `SelectFeatureType.dto_to_dao` built a `SelectDao` carrying `value` plus the
+  UI config (`uiStyle`, `maxSelected`) and nothing else. The stored DAO
+  projection is what every reader gets — a card renders its badges without
+  fetching the category, which is the entire point of the projection — so the
+  option copy was unreachable to every surface downstream. Translation could
+  not repair it either: the configs in play set `translatable_options: false`
+  and carry literal copy in the option (`{"value": "b-u", "label": "Б/у"}`),
+  so there is no bundle for a reader to look the slug up in.
+
+  `SelectDao` now carries `labels: List[str]` immediately after `value`, and
+  `dto_to_dao` fills it positionally from `config.options` — the matching
+  option's `label` per normalized value, and the value itself where no option
+  matches (an unresolved value labels as itself, the same rule
+  `types/refs.resolve_labels` applies to term codes). Dedup happens first, so
+  `labels` stays index-aligned with `value`.
+
+  This mirrors `ref_select` exactly rather than resolving at read time, and
+  deliberately so. Read-time resolution would mean every card, every list row
+  and every search hit fetching the category config to spell a badge —
+  destroying the one property the projection exists to provide. `value`
+  remains the filter and search axis, untouched; `labels` is display copy
+  only. `format_value` is unchanged and still resolves from the config: it is
+  the config-side path, and the snapshot does not replace it.
+
+  **Stored DAOs written before this version carry no `labels`.** The field
+  defaults to an empty list, so nothing breaks on read, but the copy is not
+  there — those rows need a re-projection (re-run `normalize_to_dao` over the
+  stored DTOs) before a reader can rely on it. Until that has run, a
+  downstream reader must fall back to `value` when `labels` is empty or is not
+  the same length as `value` — the same defensive read `ref_select`'s
+  `format_value` already performs.
+
 ## [0.6.2] - 2026-08-31
 
 ### Fixed

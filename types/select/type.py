@@ -185,7 +185,7 @@ class SelectFeatureType(BaseFeatureType[SelectConfig, SelectDto, SelectDao]):
         dto: SelectDto,
         feature: FeatureDef
     ) -> SelectDao:
-        """Convert select DTO to DAO with metadata."""
+        """Convert select DTO to DAO, snapshotting the labels of the picks."""
         value = dto.value
 
         # Deduplicate while preserving order
@@ -197,9 +197,14 @@ class SelectFeatureType(BaseFeatureType[SelectConfig, SelectDto, SelectDao]):
                 seen.add(s)
                 normalized_value.append(s)
 
+        label_map = {_get_option_value(opt): _get_option_label(opt) for opt in config.options}
+
         return SelectDao(
             type=self.slug,
             value=normalized_value,
+            # Positional with `value`; an unresolved value labels as itself,
+            # the same rule `types/refs.resolve_labels` applies to the codes.
+            labels=[label_map.get(v, v) for v in normalized_value],
             uiStyle=config.uiStyle,
             maxSelected=config.maxSelected,
             name=feature.name,

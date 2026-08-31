@@ -21,6 +21,9 @@ Tests cover:
 import pytest
 from django.core.exceptions import ValidationError
 
+from stapel_attributes import format_feature_value, parse_config
+from stapel_attributes.base import FeatureDef
+from stapel_attributes.validation import normalize_to_dao
 from stapel_attributes.registry import (
     get_feature_type,
     get_all_feature_types,
@@ -600,6 +603,69 @@ class TestSelectFeatureType:
         }
         with pytest.raises(ValidationError):
             validate_feature_dto(config, {'type': 'select', 'value': ['a', 'b']})
+
+
+class TestSelectStorage:
+    """The stored DAO carries the display copy, not only the slugs.
+
+    The DAO projection is what every reader gets — a card renders its badges
+    without fetching the category — so a select whose options are literal
+    copy (``translatable_options: false``) had no reachable label at all
+    before the snapshot existed.
+    """
+
+    CONFIG = {
+        'type': 'select',
+        'translatable_options': False,
+        'options': [
+            {'value': 'novyy', 'label': 'Новое'},
+            {'value': 'b-u', 'label': 'Б/у'},
+        ],
+    }
+
+    def _dao(self, dto_value, config=None, **feature_kwargs):
+        feature = FeatureDef(slug='state', config=config or self.CONFIG, **feature_kwargs)
+        return normalize_to_dao([feature], {'state': {'type': 'select', 'value': dto_value}})['state']
+
+    def test_dao_snapshots_the_literal_labels_in_value_order(self):
+        dao = self._dao(['b-u'], name='Состояние')
+        assert dao['value'] == ['b-u']
+        assert dao['labels'] == ['Б/у']
+
+    def test_unknown_value_labels_as_itself(self):
+        # Same rule as types/refs.resolve_labels: an unresolved value is its
+        # own label, so a reader never renders a hole.
+        dao = self._dao(['ghost'])
+        assert dao['value'] == ['ghost']
+        assert dao['labels'] == ['ghost']
+
+    def test_multi_select_keeps_order_and_dedup_with_labels_aligned(self):
+        config = {
+            'type': 'select',
+            'maxSelected': None,
+            'options': [
+                {'value': 'gps', 'label': 'GPS'},
+                {'value': 'glonass', 'label': 'ГЛОНАСС'},
+                {'value': 'beidou', 'label': 'BeiDou'},
+            ],
+        }
+        dao = self._dao(['glonass', 'gps', 'glonass'], config=config)
+        assert dao['value'] == ['glonass', 'gps']
+        assert dao['labels'] == ['ГЛОНАСС', 'GPS']
+        assert len(dao['labels']) == len(dao['value'])
+
+    def test_empty_selection_snapshots_no_labels(self):
+        feature_type = get_feature_type('select')
+        parsed = parse_config(self.CONFIG)
+        dto = feature_type.normalize_dto(parsed, {'type': 'select', 'value': []})
+        dao = feature_type.dto_to_dao(parsed, dto, FeatureDef(slug='state', config=self.CONFIG))
+        assert (dao.value, dao.labels) == ([], [])
+
+    def test_format_value_still_resolves_from_the_config(self):
+        # Unchanged on purpose: format_value is the config-side path and the
+        # snapshot does not replace it.
+        dao = get_feature_type('select').dao_class(value=['b-u', 'ghost'])
+        assert format_feature_value(self.CONFIG, dao) == 'Б/у, ghost'
 
 
 # ============================================================================
