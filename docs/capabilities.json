@@ -1,6 +1,6 @@
 {
   "module": "stapel-attributes",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "provides": "Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).",
   "axes": [
     {
@@ -62,6 +62,24 @@
       "intent": "JSON-serializable snapshot of every registered type's admin config-form declaration (built-ins + EXTRA_TYPES + runtime) — this is what ConfigEditorWidget hands to the client JS. Call it directly only if you are rendering the schema-driven form somewhere other than the built-in widget; otherwise get_config_editor_widget() already wires it for you.",
       "instead_of": [
         "hand-writing per-type admin config-form field declarations in JS"
+      ]
+    },
+    {
+      "name": "assert_raw_access_confined",
+      "kind": "gate_function",
+      "path": "stapel_attributes.guard.assert_raw_access_confined",
+      "intent": "Fail a consumer's test suite if a raw value-bearing column is mentioned outside a named allowlist of files — the gate against the projection path added next quarter.",
+      "instead_of": [
+        "a behavioural test alone, which proves today's payloads and nothing about tomorrow's"
+      ]
+    },
+    {
+      "name": "find_raw_access",
+      "kind": "factory",
+      "path": "stapel_attributes.guard.find_raw_access",
+      "intent": "The (file, line, source) hits behind assert_raw_access_confined, for a report rather than an assertion.",
+      "instead_of": [
+        "re-implementing the scan"
       ]
     },
     {
@@ -356,6 +374,96 @@
       "kind": "gate_function",
       "path": "stapel_attributes.validation.validate_dto_structured",
       "intent": "Same DTO validation as validate_dto, but returns a ValidationBatchResult (one FeatureValidationResult per feature, with machine error codes) instead of raising — the one to call from a DRF view/serializer that needs a structured, per-field API error response rather than a single Django exception."
+    },
+    {
+      "name": "dao_visibility",
+      "kind": "factory",
+      "path": "stapel_attributes.visibility.dao_visibility",
+      "intent": "Read the visibility stamped on a stored DAO (dict or dataclass).",
+      "instead_of": [
+        "dao.get('visibility') without the public default"
+      ]
+    },
+    {
+      "name": "has_value",
+      "kind": "predicate",
+      "path": "stapel_attributes.visibility.has_value",
+      "intent": "Whether a stored DAO actually carries an answer, mirroring validation.is_blank_value (0 and False ARE answers).",
+      "instead_of": [
+        "`if not dao['value']`, which calls a legitimate zero blank"
+      ]
+    },
+    {
+      "name": "is_public",
+      "kind": "predicate",
+      "path": "stapel_attributes.visibility.is_public",
+      "intent": "Whether a stored DAO may be read by anyone — the indexer's and the badge builder's predicate.",
+      "instead_of": [
+        "checking the FeatureDef at read time, which no projection path has"
+      ]
+    },
+    {
+      "name": "is_visible_to",
+      "kind": "predicate",
+      "path": "stapel_attributes.visibility.is_visible_to",
+      "intent": "Whether a value of the given visibility may be read by the given audience ('staff' outranks 'owner' on both sides).",
+      "instead_of": [
+        "hand-written role checks scattered across serializers"
+      ]
+    },
+    {
+      "name": "normalize_audience",
+      "kind": "gate_function",
+      "path": "stapel_attributes.visibility.normalize_audience",
+      "intent": "Coerce a viewer role to 'anonymous'|'owner'|'staff', failing CLOSED — unknown or missing is anonymous.",
+      "instead_of": [
+        "trusting a role string from a request, where a forgotten viewer means full disclosure"
+      ]
+    },
+    {
+      "name": "normalize_visibility",
+      "kind": "gate_function",
+      "path": "stapel_attributes.visibility.normalize_visibility",
+      "intent": "Coerce a FeatureDef.visibility to 'public'|'owner'|'staff', defaulting blank to 'public' and RAISING on an unknown value.",
+      "instead_of": [
+        "your own string comparison, which downgrades a typo like 'private' to public and publishes a VIN"
+      ]
+    },
+    {
+      "name": "public_daos",
+      "kind": "factory",
+      "path": "stapel_attributes.visibility.public_daos",
+      "intent": "The anonymous-readable subset with hidden rows DROPPED — the title, badge-strip and search-document shape.",
+      "instead_of": [
+        "emitting a redaction stub into a title line or a search index"
+      ]
+    },
+    {
+      "name": "public_slugs",
+      "kind": "factory",
+      "path": "stapel_attributes.visibility.public_slugs",
+      "intent": "The slugs in a DAO list that are safe to index or facet.",
+      "instead_of": [
+        "indexing every slug and relying on the facet plan to hide one"
+      ]
+    },
+    {
+      "name": "redact_dao",
+      "kind": "factory",
+      "path": "stapel_attributes.visibility.redact_dao",
+      "intent": "The publishable value-free stub of one hidden DAO: identity plus redacted/present/verification, built from an ALLOWLIST so a new value-bearing field on any type is hidden the day it lands.",
+      "instead_of": [
+        "deleting the keys you currently know about, which leaks the next one"
+      ]
+    },
+    {
+      "name": "redact_daos",
+      "kind": "factory",
+      "path": "stapel_attributes.visibility.redact_daos",
+      "intent": "Redact an ordered List[FeatureDao] for an audience, keeping hidden rows in place as stubs — the attribute-table shape.",
+      "instead_of": [
+        "filtering the list in each serializer, and forgetting one"
+      ]
     },
     {
       "name": "get_vocabulary_resolver",

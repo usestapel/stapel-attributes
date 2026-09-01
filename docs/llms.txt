@@ -1,8 +1,8 @@
-# stapel-attributes 0.7.1
+# stapel-attributes 0.8.0
 
 Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
-Contract: axes 1 · surface 44 · extension points 5.
+Contract: axes 1 · surface 56 · extension points 5.
 Generated from docs/capabilities.json by `stapel-llms-txt` — do not edit; drift-gated by `make contract-check`.
 
 ## Configuration axes — what a product switches on
@@ -13,6 +13,15 @@ Settings keys; `default` is what you get by saying nothing. Turning an axis off 
 ## Usage surface — call these before writing your own
 This is the answer to "does Stapel already have something for X?". `instead of` names the outside symbol this one displaces.
 ### gate_function
+- assert_raw_access_confined — stapel_attributes.guard.assert_raw_access_confined
+  instead of: a behavioural test alone, which proves today's payloads and nothing about tomorrow's
+  Fail a consumer's test suite if a raw value-bearing column is mentioned outside a named allowlist of files — the gate against the projection path added next quarter.
+- normalize_audience — stapel_attributes.visibility.normalize_audience
+  instead of: trusting a role string from a request, where a forgotten viewer means full disclosure
+  Coerce a viewer role to 'anonymous'|'owner'|'staff', failing CLOSED — unknown or missing is anonymous.
+- normalize_visibility — stapel_attributes.visibility.normalize_visibility
+  instead of: your own string comparison, which downgrades a typo like 'private' to public and publishes a VIN
+  Coerce a FeatureDef.visibility to 'public'|'owner'|'staff', defaulting blank to 'public' and RAISING on an unknown value.
 - parse_rules — stapel_attributes.rules.parse_rules
   instead of: ad hoc dict-shape checks over a rules JSON field
   Parse a feature's raw `rules` into the closed grammar, raising FeatureValidationError(INVALID_RULES) on any deviation. Call this from the model clean()/save path that stores rules, so a malformed rule is rejected where it is authored instead of surfacing later as a rule that silently never matches.
@@ -33,9 +42,18 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
 - validate_feature_dto — stapel_attributes.registry.validate_feature_dto
   Normalize AND validate an incoming DTO dict against its config in one call, raising FeatureValidationError on failure. Call this at any boundary that accepts a raw {type, value, ...} payload from a client, instead of normalizing and validating as two separately-forgettable steps.
 ### predicate
+- has_value — stapel_attributes.visibility.has_value
+  instead of: `if not dao['value']`, which calls a legitimate zero blank
+  Whether a stored DAO actually carries an answer, mirroring validation.is_blank_value (0 and False ARE answers).
 - is_blank_value — stapel_attributes.validation.is_blank_value
   instead of: `if not value:`, a hand-rolled `value in (None, '', [])`
   "Was this feature answered at all?" — the ONE definition of blankness the mandatory checks fire on (None / '' / []). Call it wherever a product decides whether an answer is present, because a falsiness check is wrong for every kind that has a zero value: an answered False is an answer for a bool, 0 is an answer for an int, and the Unix epoch is an answer for a date.
+- is_public — stapel_attributes.visibility.is_public
+  instead of: checking the FeatureDef at read time, which no projection path has
+  Whether a stored DAO may be read by anyone — the indexer's and the badge builder's predicate.
+- is_visible_to — stapel_attributes.visibility.is_visible_to
+  instead of: hand-written role checks scattered across serializers
+  Whether a value of the given visibility may be read by the given audience ('staff' outranks 'owner' on both sides).
 ### factory
 - build_feature_lookup — stapel_attributes.validation.build_feature_lookup
   Build the {slug-or-id: FeatureDef} lookup dict plus the ordered feature list in one call — the shared first step of every validate_*/normalize_to_dao entry point; use it instead of writing your own indexing loop over a configs iterable.
@@ -48,6 +66,9 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   Translation keys a single feature's config actually uses (per-type get_translation_keys), for building a per-listing/per-category translation-key manifest.
 - dao_to_dict — stapel_attributes.registry.dao_to_dict
   Convert a stored DAO (dataclass or already-dict) into a plain dict with None values excluded, ready to write into a JSONField — the single conversion point so every DAO type serializes identically regardless of whether a type plugin returns a dataclass or a dict.
+- dao_visibility — stapel_attributes.visibility.dao_visibility
+  instead of: dao.get('visibility') without the public default
+  Read the visibility stamped on a stored DAO (dict or dataclass).
 - dataclass_to_dict_no_none — stapel_attributes.base.dataclass_to_dict_no_none
   instead of: dataclasses.asdict() (stdlib) — keeps None-valued fields
   Recursively convert a (possibly nested) dataclass into a dict with None-valued fields dropped — the shape every DAO/config must serialize to for storage and API output. Use this instead of dataclasses.asdict(), which keeps None keys and doesn't match the None-omission convention every type plugin here relies on.
@@ -59,6 +80,9 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
 - field_kind_for — stapel_attributes.profile_bridge.field_kind_for
   instead of: re-deriving the ProfileFieldKind -> FIELD_KINDS mapping per projection
   Map a stapel-profiles ProfileFieldKind value to the matching config_form.FIELD_KINDS key — the one lookup a shop/classified projection needs when it builds a filterable attribute FROM a profile field, so the mapping is defined once instead of re-derived (or duplicated) per projection.
+- find_raw_access — stapel_attributes.guard.find_raw_access
+  instead of: re-implementing the scan
+  The (file, line, source) hits behind assert_raw_access_confined, for a report rather than an assertion.
 - form_declarations — stapel_attributes.config_form.form_declarations
   instead of: hand-writing per-type admin config-form field declarations in JS
   JSON-serializable snapshot of every registered type's admin config-form declaration (built-ins + EXTRA_TYPES + runtime) — this is what ConfigEditorWidget hands to the client JS. Call it directly only if you are rendering the schema-driven form somewhere other than the built-in widget; otherwise get_config_editor_widget() already wires it for you.
@@ -111,6 +135,18 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   Turn a raw config dict (with its 'type' discriminator) into the typed config dataclass for that type, validating shape via the type's own config_serializer_class along the way. Reach for this whenever you need typed field access (config.min, config.options, ...) instead of dict.get() with manual type coercion.
 - parse_dto — stapel_attributes.registry.parse_dto
   Turn a raw DTO dict into the typed DTO dataclass for a given type slug, dropping unknown keys. Use it instead of constructing the type's dto_class by hand when you already know the slug and have not yet resolved the config.
+- public_daos — stapel_attributes.visibility.public_daos
+  instead of: emitting a redaction stub into a title line or a search index
+  The anonymous-readable subset with hidden rows DROPPED — the title, badge-strip and search-document shape.
+- public_slugs — stapel_attributes.visibility.public_slugs
+  instead of: indexing every slug and relying on the facet plan to hide one
+  The slugs in a DAO list that are safe to index or facet.
+- redact_dao — stapel_attributes.visibility.redact_dao
+  instead of: deleting the keys you currently know about, which leaks the next one
+  The publishable value-free stub of one hidden DAO: identity plus redacted/present/verification, built from an ALLOWLIST so a new value-bearing field on any type is hidden the day it lands.
+- redact_daos — stapel_attributes.visibility.redact_daos
+  instead of: filtering the list in each serializer, and forgetting one
+  Redact an ordered List[FeatureDao] for an audience, keeping hidden rows in place as stubs — the attribute-table shape.
 - register_feature_type — stapel_attributes.registry.register_feature_type
   instead of: a bespoke if/elif type-dispatch chain in place of the open registry
   Register a custom BaseFeatureType (decorator or direct call) from a host AppConfig.ready() to add a domain-specific attribute type without forking the registry — the fork-free way in, alternative to declaring EXTRA_TYPES when the type class already lives in the calling module.

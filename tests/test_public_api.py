@@ -77,6 +77,27 @@ class TestLazyExports:
             # Profile-field bridge (§66, optional — no stapel-profiles dependency)
             "PROFILE_KIND_TO_FIELD_KIND",
             "field_kind_for",
+            # Visibility axis (which audience may READ a stored value)
+            "ANONYMOUS",
+            "AUDIENCE_OWNER",
+            "AUDIENCE_STAFF",
+            "OWNER",
+            "PUBLIC",
+            "STAFF",
+            "UnknownVisibility",
+            "VISIBILITIES",
+            "dao_visibility",
+            "is_public",
+            "is_visible_to",
+            "normalize_audience",
+            "normalize_visibility",
+            "public_daos",
+            "public_slugs",
+            "redact_dao",
+            "redact_daos",
+            # Source-level gate against the next projection path that leaks
+            "assert_raw_access_confined",
+            "find_raw_access",
             # Polymorphic serializer factories
             "get_feature_config_serializer_class",
             "get_feature_dto_serializer_class",

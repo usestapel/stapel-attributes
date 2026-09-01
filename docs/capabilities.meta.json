@@ -36,6 +36,14 @@
     {
       "select": "functions",
       "path": "vocabularies.py"
+    },
+    {
+      "select": "functions",
+      "path": "visibility.py"
+    },
+    {
+      "select": "functions",
+      "path": "guard.py"
     }
   ],
   "surface": {
@@ -284,6 +292,90 @@
       "intent": "Recursively convert a (possibly nested) dataclass into a dict with None-valued fields dropped — the shape every DAO/config must serialize to for storage and API output. Use this instead of dataclasses.asdict(), which keeps None keys and doesn't match the None-omission convention every type plugin here relies on.",
       "instead_of": [
         "dataclasses.asdict() (stdlib) — keeps None-valued fields"
+      ]
+    },
+    "normalize_visibility": {
+      "kind": "gate_function",
+      "intent": "Coerce a FeatureDef.visibility to 'public'|'owner'|'staff', defaulting blank to 'public' and RAISING on an unknown value.",
+      "instead_of": [
+        "your own string comparison, which downgrades a typo like 'private' to public and publishes a VIN"
+      ]
+    },
+    "normalize_audience": {
+      "kind": "gate_function",
+      "intent": "Coerce a viewer role to 'anonymous'|'owner'|'staff', failing CLOSED — unknown or missing is anonymous.",
+      "instead_of": [
+        "trusting a role string from a request, where a forgotten viewer means full disclosure"
+      ]
+    },
+    "is_visible_to": {
+      "kind": "predicate",
+      "intent": "Whether a value of the given visibility may be read by the given audience ('staff' outranks 'owner' on both sides).",
+      "instead_of": [
+        "hand-written role checks scattered across serializers"
+      ]
+    },
+    "dao_visibility": {
+      "kind": "factory",
+      "intent": "Read the visibility stamped on a stored DAO (dict or dataclass).",
+      "instead_of": [
+        "dao.get('visibility') without the public default"
+      ]
+    },
+    "is_public": {
+      "kind": "predicate",
+      "intent": "Whether a stored DAO may be read by anyone — the indexer's and the badge builder's predicate.",
+      "instead_of": [
+        "checking the FeatureDef at read time, which no projection path has"
+      ]
+    },
+    "has_value": {
+      "kind": "predicate",
+      "intent": "Whether a stored DAO actually carries an answer, mirroring validation.is_blank_value (0 and False ARE answers).",
+      "instead_of": [
+        "`if not dao['value']`, which calls a legitimate zero blank"
+      ]
+    },
+    "redact_dao": {
+      "kind": "factory",
+      "intent": "The publishable value-free stub of one hidden DAO: identity plus redacted/present/verification, built from an ALLOWLIST so a new value-bearing field on any type is hidden the day it lands.",
+      "instead_of": [
+        "deleting the keys you currently know about, which leaks the next one"
+      ]
+    },
+    "redact_daos": {
+      "kind": "factory",
+      "intent": "Redact an ordered List[FeatureDao] for an audience, keeping hidden rows in place as stubs — the attribute-table shape.",
+      "instead_of": [
+        "filtering the list in each serializer, and forgetting one"
+      ]
+    },
+    "public_daos": {
+      "kind": "factory",
+      "intent": "The anonymous-readable subset with hidden rows DROPPED — the title, badge-strip and search-document shape.",
+      "instead_of": [
+        "emitting a redaction stub into a title line or a search index"
+      ]
+    },
+    "public_slugs": {
+      "kind": "factory",
+      "intent": "The slugs in a DAO list that are safe to index or facet.",
+      "instead_of": [
+        "indexing every slug and relying on the facet plan to hide one"
+      ]
+    },
+    "assert_raw_access_confined": {
+      "kind": "gate_function",
+      "intent": "Fail a consumer's test suite if a raw value-bearing column is mentioned outside a named allowlist of files — the gate against the projection path added next quarter.",
+      "instead_of": [
+        "a behavioural test alone, which proves today's payloads and nothing about tomorrow's"
+      ]
+    },
+    "find_raw_access": {
+      "kind": "factory",
+      "intent": "The (file, line, source) hits behind assert_raw_access_confined, for a report rather than an assertion.",
+      "instead_of": [
+        "re-implementing the scan"
       ]
     }
   }

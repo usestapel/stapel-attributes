@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 from stapel_attributes.base import BaseFeatureType, FeatureDef, dataclass_to_dict_no_none
 from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.results import ValidationErrorCode
+from stapel_attributes.visibility import PUBLIC, normalize_visibility
 
 # Type variables
 TConfig = TypeVar('TConfig')
@@ -423,7 +424,53 @@ def dto_to_dao(config: Any, dto: Any, feature: FeatureDef) -> Any:
         config = parse_config(config)
 
     feature_type = get_feature_type(config.type)
-    return feature_type.dto_to_dao(config, dto, feature)
+    return _stamp_visibility(feature_type.dto_to_dao(config, dto, feature), feature)
+
+
+def _stamp_visibility(dao: Any, feature: FeatureDef) -> Any:
+    """Stamp ``FeatureDef.visibility`` onto a freshly built DAO.
+
+    Done HERE, once, rather than in each of the fourteen ``dto_to_dao``
+    implementations, for two reasons. A type author cannot forget it — and a
+    type the *host* registered through ``EXTRA_TYPES``, whose code this library
+    has never seen, is stamped too. Forgetting is exactly the failure mode the
+    axis exists to prevent: one unstamped type is one published VIN.
+
+    ``public`` is left as ``None`` so it never reaches the stored JSON
+    (``dataclass_to_dict_no_none`` drops it) — the axis costs zero bytes on the
+    99% of values that are public, and an existing public row is byte-identical
+    after a re-projection.
+    """
+    visibility = normalize_visibility(getattr(feature, 'visibility', None))
+    if visibility == PUBLIC:
+        return dao
+    if is_dataclass(dao) and not isinstance(dao, type):
+        if any(f.name == 'visibility' for f in fields(dao)):
+            dao.visibility = visibility
+            # A hidden value is never a title and never a badge. The projection
+            # builders drop it from both anyway, but a DAO that still CLAIMED
+            # ``title: true`` would be a lie sitting in the database waiting for
+            # the next consumer to believe it.
+            for flag in ('title', 'badge'):
+                if any(f.name == flag for f in fields(dao)):
+                    setattr(dao, flag, None)
+            return dao
+        raise FeatureValidationError(
+            f"Feature '{feature.slug}' is {visibility!r} but its DAO type "
+            f"{type(dao).__name__} has no 'visibility' field — a non-public "
+            f"value must never be stored unstamped. Inherit DaoMeta.",
+            code=ValidationErrorCode.INVALID_CONFIG,
+        )
+    if isinstance(dao, dict):
+        dao['visibility'] = visibility
+        dao.pop('title', None)
+        dao.pop('badge', None)
+        return dao
+    raise FeatureValidationError(
+        f"Feature '{feature.slug}' is {visibility!r} but its type returned a "
+        f"DAO that is neither a dataclass nor a dict; it cannot be stamped.",
+        code=ValidationErrorCode.INVALID_CONFIG,
+    )
 
 
 # =============================================================================

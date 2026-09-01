@@ -11,7 +11,7 @@ hand-written source OR the derived surface changes underneath it without a
 `make contract` re-run — exactly the silent-rot failure mode the fifth
 artifact exists to catch.
 
-LLMS_TXT_BUDGET matches the Makefile's ``--budget 5200`` — see its comment
+LLMS_TXT_BUDGET matches the Makefile's ``--budget 6400`` — see its comment
 there for why the 36-entry surface (this L1 library is almost entirely
 surface) needs headroom over the generator's default 4000-token ceiling.
 """
@@ -36,7 +36,7 @@ from stapel_tools.llms_txt import load_inputs, render  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 COMMITTED = REPO / "docs" / "llms.txt"
-LLMS_TXT_BUDGET = 5200
+LLMS_TXT_BUDGET = 6400
 
 
 def test_llms_txt_committed():

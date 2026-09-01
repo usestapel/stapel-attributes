@@ -4,6 +4,71 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.8.0] — 2026-09-02
+
+Minor (pre-1.0: minor = breaking, patch = compatible). New axis on the
+FeatureDef contract; the DAO shape gains two optional keys. Existing
+definitions and existing stored values are unaffected — `public` is the
+default and stamps nothing.
+
+### Added
+
+- **`FeatureDef.visibility` — which audience may READ a stored value.**
+  `"public"` (default) | `"owner"` | `"staff"`. Orthogonal to `mandatory`: a
+  non-public feature is still required, still validated, still stored, still
+  moderated, still editable by its owner. It is only never handed to a reader
+  who is not entitled to it.
+
+  The axis exists for attributes that *identify a specific physical unit*
+  rather than describe it — a VIN, an IMEI, a serial number, a registry
+  number. Publishing one lets a stranger act as that unit's owner, and
+  indexing one turns search into an oracle that confirms which listing it
+  belongs to.
+
+  A non-public definition forces `show_at_title` and `show_as_badge` to
+  `false`; a definition may legitimately hold that contradiction, and the
+  engine resolves it in the only direction that cannot leak. An unknown
+  visibility raises `UnknownVisibility` rather than downgrading — a typo that
+  meant to hide a VIN must fail at the door, not publish it.
+
+- **`DaoMeta.visibility` / `DaoMeta.verification`, stamped by the pipeline.**
+  `registry.dto_to_dao` stamps `visibility` onto every DAO it builds — for the
+  built-in types and for host-registered ones alike — so no type author can
+  forget it. `public` is stamped as `None` and dropped from the stored JSON, so
+  a public value is byte-identical to what 0.7.1 stored. A DAO type that cannot
+  carry the stamp *refuses* to store a non-public value.
+
+  The stamp travels with the value because every read path in the fleet — a
+  card, a detail payload, a search document, a bus event — sees the stored DAO
+  and nothing else, with no category schema at hand.
+
+  `verification` is reserved, never written and never synthesized: nothing in
+  the fleet runs a VIN or IMEI check, so a renderer may say a value was
+  *supplied* and must not say it was *verified*. See `docs/visibility.md`.
+
+- **`stapel_attributes.visibility` — the redaction chokepoint.**
+  `redact_daos(daos, audience)` keeps hidden rows as value-free stubs
+  (`redacted: true`, `present: <bool>`) for an attribute table;
+  `public_daos` / `public_slugs` drop them entirely for a title, a badge strip
+  or an index. Redaction copies an **allowlist** rather than deleting a
+  denylist, so a feature type that grows a new value-bearing field (as
+  `ref_select` did with its `labels` snapshot) is redacted correctly on the day
+  that field lands. `normalize_audience` fails closed: an unknown or missing
+  audience is `anonymous`.
+
+- **`stapel_attributes.guard` — a source-level gate for consumers.**
+  `assert_raw_access_confined(root, names, allow)` fails a consumer's test
+  suite if a raw value-bearing column is mentioned outside a named list of
+  files. Behavioural tests prove today's payloads are clean; this one is about
+  the projection path somebody adds next quarter, which is exactly how the leak
+  happened the first time.
+
+### Migration
+
+Values stored before a definition became non-public carry no stamp and still
+read as public. Changing a `visibility` is not complete until
+`python manage.py listings_reproject_features --category <id>` has run.
+
 ## [0.7.1] — 2026-09-01
 
 Patch (pre-1.0: minor = breaking, patch = compatible). Test corpus and prose

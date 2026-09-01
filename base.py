@@ -115,6 +115,10 @@ class DaoMeta:
     - title: Whether to show in listing title
     - badge: Whether to show as badge
     - translate: Translation mode ('all', 'title', 'none')
+    - visibility: Which audience may read the value ('owner' / 'staff'), or
+      ``None`` for the default, ``public``
+    - verification: An outside-world check of this value, when some product
+      has actually run one
 
     Example:
         @dataclass
@@ -127,6 +131,23 @@ class DaoMeta:
     title: Optional[bool] = None
     badge: Optional[bool] = None
     translate: Optional[str] = None  # 'all' | 'title' | 'none'
+    # Stamped by the pipeline from ``FeatureDef.visibility`` — NOT by each
+    # type's ``dto_to_dao``, so a host-registered type gets it for free (see
+    # ``registry.dto_to_dao``). ``None`` is the default, ``public``, and stays
+    # out of the stored JSON entirely (``dataclass_to_dict_no_none``), so
+    # adding this axis changed not one byte of an existing public value.
+    #
+    # It is stamped ON THE VALUE, not looked up at read time, because every
+    # read path in the fleet — a card, a detail payload, a search document, a
+    # bus event — has the stored DAO and nothing else. See
+    # ``stapel_attributes.visibility``.
+    visibility: Optional[str] = None  # 'public' | 'owner' | 'staff'
+    # ``{"status": ..., "verified_at": ..., "source": ...}`` — a claim about
+    # the outside world, written by whoever ran the check. NOTHING in the
+    # fleet writes one today, and the engine never synthesizes one: a renderer
+    # that finds this absent may say the value was *supplied*, never that it
+    # was *verified*.
+    verification: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -150,6 +171,13 @@ class FeatureDef:
         show_at_title: Whether the value is shown in the listing title.
         show_as_badge: Whether the value is shown as a badge.
         translate: Translation mode ('all' | 'title' | 'none').
+        visibility: Which audience may READ a stored value — ``'public'``
+            (default), ``'owner'`` or ``'staff'``. Orthogonal to
+            ``mandatory``: a non-public feature is still required, still
+            validated, still stored, still moderated. It is only never handed
+            to a reader who is not entitled to it. Identifiers of a specific
+            physical unit (VIN, IMEI, a serial or registry number) belong
+            here. See :mod:`stapel_attributes.visibility`.
         rules: Conditional rules (raw dicts in the closed grammar of
             ``stapel_attributes.rules``, parsed on demand by ``parse_rules``).
             A sibling of ``mandatory``, never part of ``config``: a rule is
@@ -177,10 +205,22 @@ class FeatureDef:
     default: Any = None
     hints: List[Dict[str, str]] = dataclass_field(default_factory=list)
     group: Optional[str] = None
+    visibility: str = 'public'
 
     def __post_init__(self) -> None:
         if self.name is None:
             self.name = self.slug
+        # Raises UnknownVisibility on a typo — a definition that meant to hide
+        # a VIN and misspelled the level must fail at the door, not publish it.
+        from stapel_attributes.visibility import PUBLIC, normalize_visibility
+
+        self.visibility = normalize_visibility(self.visibility)
+        if self.visibility != PUBLIC:
+            # Not an error, a contradiction the catalogue is allowed to hold
+            # (a feature can be marked hidden long after someone flagged it as
+            # a badge). Resolve it in the direction that cannot leak.
+            self.show_at_title = False
+            self.show_as_badge = False
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], slug: Optional[str] = None) -> 'FeatureDef':

@@ -323,7 +323,10 @@ def normalize_to_dao(
             feature_type = get_feature_type('header')
             # Create DAO directly from config (no user input)
             header_dto = feature_type.dto_class(type='header', value=None)
-            dao = feature_type.dto_to_dao(config, header_dto, feature)
+            # Through the registry, not the type, so the header is stamped with
+            # the section's visibility like every other DAO: a staff-only
+            # section heading must not label an empty gap on a public page.
+            dao = registry_dto_to_dao(config, header_dto, feature)
             dao_dict = _dao_to_dict(dao)
             dao_dict['order'] = order
             result[slug] = dao_dict
