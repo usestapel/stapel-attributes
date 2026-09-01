@@ -62,6 +62,7 @@ def find_raw_access(
     names: Sequence[str],
     allow: Sequence[str] = (),
     skip_dirs: Sequence[str] = DEFAULT_SKIP_DIRS,
+    ignore: Sequence[str] = (),
 ) -> List[Tuple[str, int, str]]:
     """Every mention of ``names`` under ``root`` outside ``allow``.
 
@@ -71,8 +72,15 @@ def find_raw_access(
     A "mention" is the bare identifier as a whole word — ``listing.features``,
     ``"features"``, ``features=``. Lines whose first non-space character is
     ``#`` are skipped, so a comment explaining the rule does not trip it.
+
+    ``ignore`` is a list of regexes for spellings that merely *look* like the
+    column: a value column and a comm function can honestly share a word
+    (``listing.features`` the stored values, ``"categories.features"`` the
+    schema that describes them). Blank the homographs rather than allowlisting
+    the whole file, so the file keeps being checked for the real thing.
     """
     pattern = re.compile(r'\b(' + '|'.join(re.escape(n) for n in names) + r')\b')
+    ignored = [re.compile(p) for p in ignore]
     allowed_files = {a for a in allow if not a.endswith('/')}
     allowed_dirs = tuple(a for a in allow if a.endswith('/'))
     hits: List[Tuple[str, int, str]] = []
@@ -84,7 +92,10 @@ def find_raw_access(
         for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
             if line.lstrip().startswith('#'):
                 continue
-            if pattern.search(line):
+            probe = line
+            for homograph in ignored:
+                probe = homograph.sub('', probe)
+            if pattern.search(probe):
                 hits.append((rel, lineno, line.strip()))
     return hits
 
@@ -94,9 +105,10 @@ def assert_raw_access_confined(
     names: Sequence[str],
     allow: Sequence[str] = (),
     skip_dirs: Sequence[str] = DEFAULT_SKIP_DIRS,
+    ignore: Sequence[str] = (),
 ) -> None:
     """Raise ``AssertionError`` naming every file that reaches past the chokepoint."""
-    hits = find_raw_access(root, names, allow, skip_dirs)
+    hits = find_raw_access(root, names, allow, skip_dirs, ignore)
     if not hits:
         return
     listed = '\n'.join(f"  {rel}:{lineno}: {line}" for rel, lineno, line in hits)

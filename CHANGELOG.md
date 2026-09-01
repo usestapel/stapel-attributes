@@ -4,6 +4,21 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.8.1] — 2026-09-02
+
+Patch (pre-1.0: minor = breaking, patch = compatible). One new optional
+argument on the source-level gate.
+
+### Added
+
+- **`guard.find_raw_access(..., ignore=...)`** — regexes for spellings that
+  merely *look* like the column being guarded. A value column and a comm
+  function can honestly share a word: in stapel-listings, `listing.features`
+  is the stored values while `"categories.features"` is the name of the
+  function returning the schema that describes them. Blanking the homograph
+  keeps the file under the gate for the real thing, which allowlisting the
+  whole file would not.
+
 ## [0.8.0] — 2026-09-02
 
 Minor (pre-1.0: minor = breaking, patch = compatible). New axis on the
