@@ -461,10 +461,10 @@ class TestValidateDescription:
 class TestAnsweredSemantics:
     """`is_blank_value` and its three call sites.
 
-    Provoked by a client fleet's live storefront run of 2026-08-31: the Avito
-    import gave «Коробка запечатана» — a `select {Да, Нет}` with
-    `required: true` at source — to the composer as a `bool`, and a seller who
-    meant «Нет» could not publish. The engine's own half of that has to be nailed down and kept
+    Provoked by a client fleet's live storefront run of 2026-08-31: a catalogue
+    import gave "sealed box" — a `select {yes, no}` with `required: true` at
+    source — to the composer as a `bool`, and a seller who meant "no" could not
+    publish. The engine's own half of that has to be nailed down and kept
     nailed: an answered `False` is an ANSWER, on every path, and the rule that
     says so lived as an unnamed literal in three places.
     """

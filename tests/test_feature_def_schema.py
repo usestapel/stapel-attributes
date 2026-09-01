@@ -39,7 +39,7 @@ def _corpus_rules():
     """Every rule authored anywhere in the golden corpus, with its case id."""
     for path in sorted(RULES_DIR.rglob("*.json")):
         loaded = json.loads(path.read_text())
-        # cases/ and pipeline/ hold one case per file; avito/ holds an array.
+        # cases/ and pipeline/ hold one case per file; imported/ holds an array.
         cases = loaded if isinstance(loaded, list) else [loaded]
         for case in cases:
             for feature in case["features"]:

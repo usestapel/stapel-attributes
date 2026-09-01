@@ -4,6 +4,41 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.7.1] — 2026-09-01
+
+Patch (pre-1.0: minor = breaking, patch = compatible). Test corpus and prose
+only — no engine, schema or API change.
+
+### Changed
+
+- **The imported rule corpus is now source-neutral and synthetic.**
+  The corpus directory is now `tests/golden/rules/imported/`, and both
+  files (`prose.json`, `values-by-group.json`) were regenerated: every option
+  value and label is a synthetic token (`opt-001` / `Option 1`), and every
+  `note` is a structural description of the rule it guards
+  (`show: all in on specialty`) instead of a sentence copied out of the source
+  catalogue's documentation. Case ids are `imported-prose-NNNNN` /
+  `imported-vbg-NNNNN`.
+
+  The rewrite is an injective map applied per case, so the corpus proves
+  exactly what it proved before: 3890 distinct rules (1185 from dependency
+  prose, 2705 from `values_by_group`), the same effect mix (require 153,
+  show 1020, hide 12, forbid_option 2689, limit 16), the same feature sets,
+  cardinalities and polarity pairs. The rule engine reads option values as
+  opaque tokens and only ever compares them for equality, so renaming them
+  changes no outcome — the `expect` bodies were re-recorded with
+  `GOLDEN_RECORD=1` and the corpus-shape gate (both polarities must disagree
+  on the ruled feature, effects must cover the closed set) still holds on
+  every case. The corpus also lost two thirds of its bytes on the way
+  (12 MB → 6.6 MB).
+
+  Feature slugs are unchanged — they are this project's normalized names, not
+  the source's — except one imported slug that named the source catalogue.
+
+  **Consumers copying this corpus must follow the rename**: the directory key
+  is `imported`, not the old name. @stapel/attributes-react's
+  `gen:rules` driver is updated in the same wave.
+
 ## [0.7.0] — 2026-08-31
 
 ### Added
@@ -61,11 +96,11 @@ Pre-1.0 semver: **minor = breaking**, patch = compatible.
   for a `bool`, `0` for an `int`, the epoch for a `date` — Python makes that
   true by accident (`False == ''` and `False == []` are both false), and no
   test said so anywhere. A client fleet's live storefront run of 2026-08-31 put a
-  mandatory «Коробка запечатана» in front of a seller who meant «Нет» and had
+  mandatory "sealed box" in front of a seller who meant "no" and had
   no way through, so the engine's half of that contract is now stated and
   gated instead of holding by luck. The seller-facing half was in the data:
-  the field is a `select {Да, Нет}` at source and only became a `bool` in the
-  Avito import (fixed in stapel-tools 0.60.0).
+  the field is a `select {yes, no}` at source and only became a `bool` in the
+  catalogue import (fixed in stapel-tools 0.60.0).
 
   A `bool` that was never submitted is still blank, and deliberately so — the
   engine cannot tell an unanswered switch from an answered "no", which is why
@@ -103,9 +138,9 @@ Nothing about the existing twelve types changes.
 
 One feature holding a small table: a list of rows, each row a set of child
 features of the other kinds. The deferred item of the attributes-v2 spec
-(§596, "Композитные поля (group-kind)") — and the only shape in the Avito
-autoload corpus that no kind could express: **2 468 raw fields carry
-`children`** (2 454 `DiscountLadderList`, 14 `CompatibleCars`), which the
+(§596, composite fields / the group kind) — and the only shape in the
+imported catalogue corpus that no kind could express: **2 468 raw fields carry
+`children`** (2 454 discount ladders, 14 compatible-vehicle lists), which the
 importer had to count and drop.
 
 ```json
@@ -173,8 +208,8 @@ Patch (pre-1.0: minor = breaking, patch = compatible). Test corpus only —
 no engine, schema or API change.
 
 ### Added
-- `tests/golden/rules/avito/` — the Avito autoload rule corpus emitted by
-  `stapel-avito-import --emit-rule-cases` (stapel-tools 0.57.1): 3890
+- `tests/golden/rules/imported/` — the imported-catalogue rule corpus emitted
+  by the catalogue importer (stapel-tools 0.57.1): 3890
   distinct rules (1185 parsed from dependency prose, 2705 derived from
   `values_by_group`), each with a `match` and a `nomatch` value set whose
   `expect` is recorded by the Python evaluator. Effects covered: require 153,

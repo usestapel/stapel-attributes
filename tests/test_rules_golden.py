@@ -29,9 +29,11 @@ from stapel_attributes.validation import normalize_to_dao, validate_dto_structur
 RULES_DIR = Path(__file__).parent / "golden" / "rules"
 CASES_DIR = RULES_DIR / "cases"
 PIPELINE_DIR = RULES_DIR / "pipeline"
-# Emitted by `stapel-avito-import --emit-rule-cases`: one match/nomatch pair per
-# distinct dependency sentence of the Avito autoload schema.
-AVITO_DIR = RULES_DIR / "avito"
+# The IMPORTED set: one match/nomatch pair per distinct dependency sentence of
+# an imported external catalogue, emitted by the catalogue importer and
+# de-identified (synthetic option vocabulary, structural notes) — what it
+# proves is the grammar coverage, not whose catalogue it came from.
+IMPORTED_DIR = RULES_DIR / "imported"
 RECORD = os.environ.get("GOLDEN_RECORD") == "1"
 
 
@@ -85,7 +87,7 @@ def test_corpus_is_not_empty():
     # parametrized test below vacuously green.
     assert len(_paths(CASES_DIR)) >= 40
     assert _paths(PIPELINE_DIR)
-    assert _paths(AVITO_DIR)
+    assert _paths(IMPORTED_DIR)
 
 
 @pytest.mark.parametrize("path", _paths(CASES_DIR), ids=lambda p: p.stem)
@@ -98,30 +100,30 @@ def test_rule_pipeline_case(path):
     _check(path, _run_pipeline(json.loads(path.read_text())))
 
 
-def _avito_files():
-    return sorted(AVITO_DIR.glob("*.json"))
+def _imported_files():
+    return sorted(IMPORTED_DIR.glob("*.json"))
 
 
-def _avito_cases():
+def _imported_cases():
     # One compact array per source file: a case holds the feature set once
     # and both polarities, so the corpus stays a few megabytes, not tens.
-    for path in _avito_files():
+    for path in _imported_files():
         for case in json.loads(path.read_text()):
             yield path, case
 
 
-def _avito_expected(case: dict) -> dict:
+def _imported_expected(case: dict) -> dict:
     return {pol: _run_state({"features": case["features"], "values": body["values"]})
             for pol, body in sorted(case["polarities"].items())}
 
 
-@pytest.mark.parametrize("path", _avito_files(), ids=lambda p: p.stem)
-def test_avito_rule_cases(path):
+@pytest.mark.parametrize("path", _imported_files(), ids=lambda p: p.stem)
+def test_imported_rule_cases(path):
     cases = json.loads(path.read_text())
     diverged = []
     changed = False
     for case in cases:
-        actual = _avito_expected(case)
+        actual = _imported_expected(case)
         for pol, state in actual.items():
             body = case["polarities"][pol]
             if RECORD:
@@ -139,10 +141,10 @@ def test_avito_rule_cases(path):
     assert not diverged, f"diverged from the golden corpus: {diverged[:10]}"
 
 
-def test_avito_corpus_shape():
+def test_imported_corpus_shape():
     effects = set()
     total = 0
-    for _, case in _avito_cases():
+    for _, case in _imported_cases():
         total += 1
         assert case["polarities"]["match"] and case["polarities"]["nomatch"]
         target = [f for f in case["features"] if f.get("rules")]

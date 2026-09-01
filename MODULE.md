@@ -272,7 +272,8 @@ known_slugs=...)` reports it as a non-blocking warning.
   submitted. `header` is always visible and never required.
 
 The shared corpus lives in `tests/golden/rules/{cases,pipeline}/` (record with
-`GOLDEN_RECORD=1`); `tests/golden/rules/avito/` is filled by the importer.
+`GOLDEN_RECORD=1`); `tests/golden/rules/imported/` is filled by the catalogue
+importer and de-identified before it lands here.
 
 ### Vocabulary resolver seam (`vocabularies.py`)
 
@@ -317,10 +318,10 @@ Parsing a stored config never needs a resolver.
 ### `group` — the composite (a repeatable subform)
 
 One feature holding a small table: a list of rows, each row a set of child
-features of the *other* kinds. It exists because roughly 2 % of the Avito
-autoload corpus is exactly this shape (2 468 fields carry `children`, e.g.
-`DiscountLadderList` — "quantity from N, discount M %", up to five rows), and
-no other kind could express it.
+features of the *other* kinds. It exists because roughly 2 % of the imported
+catalogue corpus is exactly this shape (2 468 fields carry `children`, e.g. a
+wholesale discount ladder — "quantity from N, discount M %", up to five
+rows), and no other kind could express it.
 
 ```json
 {"type": "group",

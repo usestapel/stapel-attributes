@@ -1,8 +1,8 @@
 """Group (composite) Feature Type - Type Handler.
 
 One feature that holds a small table: a list of rows, each row a set of child
-features of the ordinary kinds. It exists because roughly 2 % of the Avito
-attribute corpus is exactly this shape — a ``DiscountLadderList`` is
+features of the ordinary kinds. It exists because roughly 2 % of the imported
+attribute corpus is exactly this shape — a wholesale discount ladder is
 "quantity from N, discount M %", repeated — and there was no way to express it
 short of inventing one type per composite.
 

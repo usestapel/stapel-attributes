@@ -3,9 +3,9 @@
 Covers the config boundaries (depth 1, no headers, no child rules, unique
 slugs, repeat bounds), per-row validation delegated to each child's own type,
 the DAO shape (rows of child DAOs carrying child DaoMeta), and the pipeline
-end-to-end. The worked example is Avito's ``DiscountLadderList``: "quantity
-from N, discount M %", up to five rows — the shape 2 468 raw Avito fields
-carry and no other kind could express.
+end-to-end. The worked example is a wholesale discount ladder: "quantity from
+N, discount M %", up to five rows — the shape 2 468 raw fields of the imported
+catalogue carry and no other kind could express.
 """
 import pytest
 
@@ -38,7 +38,7 @@ _DEFAULT_REPEAT = object()
 
 
 def ladder_config(repeat=_DEFAULT_REPEAT):
-    """The DiscountLadderList shape: quantity threshold + discount percent."""
+    """The discount-ladder shape: quantity threshold + discount percent."""
     return {
         "type": "group",
         "fields": [
