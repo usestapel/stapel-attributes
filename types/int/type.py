@@ -1,14 +1,17 @@
 """Integer Feature Type - Type Handler."""
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
-from stapel_attributes.base import BaseFeatureType, FeatureDef
+from stapel_attributes.base import BaseFeatureType, FeatureDef, ValidationContext
 from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.registry import register_feature_type
 from stapel_attributes.results import ValidationErrorCode
+from stapel_attributes.rules import stringify
 from stapel_attributes.types.int.config import IntConfig, IntConfigSerializer
 from stapel_attributes.types.int.dto import IntDto, IntDtoSerializer
 from stapel_attributes.types.int.dao import IntDao, IntDaoSerializer
+from stapel_attributes.types.refs import describe_or_fail, ref_field, require_resolver
+from stapel_attributes.vocabularies import get_vocabulary_resolver
 
 
 @register_feature_type
@@ -65,6 +68,23 @@ class IntFeatureType(BaseFeatureType[IntConfig, IntDto, IntDao]):
                 code=ValidationErrorCode.INVALID_CONFIG,
             )
 
+        if config.optionsRef is not None:
+            resolver = require_resolver(self.slug)
+            vocabulary = ref_field(config.optionsRef, 'vocabulary')
+            level = ref_field(config.optionsRef, 'level')
+            if not vocabulary or not level:
+                raise FeatureValidationError(
+                    "'optionsRef' must carry a 'vocabulary' and a 'level'",
+                    code=ValidationErrorCode.INVALID_CONFIG,
+                )
+            info = describe_or_fail(resolver, vocabulary)
+            if info.level(level) is None:
+                raise FeatureValidationError(
+                    f"unknown level '{level}' in vocabulary '{vocabulary}'",
+                    code=ValidationErrorCode.INVALID_CONFIG,
+                    ref_value=[lvl.name for lvl in info.levels],
+                )
+
     def validate_dto(self, config: IntConfig, dto: IntDto) -> None:
         """Validate integer DTO data against configuration."""
         value = dto.value
@@ -92,6 +112,82 @@ class IntFeatureType(BaseFeatureType[IntConfig, IntDto, IntDao]):
                     code=ValidationErrorCode.NOT_IN_OPTIONS,
                     ref_value=list(config.options),
                 )
+
+        self._check_ref_membership(config, value)
+
+    def _check_ref_membership(self, config: IntConfig, value: int) -> None:
+        """The value must be a term of the ``optionsRef`` level.
+
+        The term code of an integer is its decimal digits — the importer
+        writes vocabulary terms out of the same digits, so the two sides
+        cannot disagree on the spelling.
+        """
+        if config.optionsRef is None:
+            return
+        vocabulary = ref_field(config.optionsRef, 'vocabulary')
+        level = ref_field(config.optionsRef, 'level')
+        resolver = get_vocabulary_resolver()
+        if resolver is None or not vocabulary or not level:
+            return
+        if not resolver.exists(vocabulary, level, str(value)):
+            raise FeatureValidationError(
+                f"Value {value} is not an allowed term of {vocabulary}/{level}",
+                code=ValidationErrorCode.NOT_IN_OPTIONS,
+                ref_value=str(value),
+            )
+
+    def validate_dto_in_context(
+        self,
+        config: IntConfig,
+        dto: IntDto,
+        context: ValidationContext,
+    ) -> None:
+        """Membership, narrowed by the parent feature's selection.
+
+        The same contract as ``ref_select.validate_dto_in_context``: with
+        ``parentFeature`` filled the value must be a child term of the FIRST
+        parent code; with the parent empty the whole level is allowed — a
+        soft path on purpose, so a form validates top-down without forcing an
+        order on the user.
+        """
+        self.validate_dto(config, dto)
+
+        if config.optionsRef is None:
+            return
+        parent_feature = ref_field(config.optionsRef, 'parentFeature')
+        if not parent_feature:
+            return
+
+        parent_codes = stringify(context.values.get(parent_feature))
+        if not parent_codes:
+            return
+
+        resolver = get_vocabulary_resolver()
+        vocabulary = ref_field(config.optionsRef, 'vocabulary')
+        level = ref_field(config.optionsRef, 'level')
+        if resolver is None or not vocabulary or not level:
+            return
+
+        parent_level = self._parent_level(resolver, vocabulary, level)
+        if parent_level is None:
+            return
+
+        parent_code = parent_codes[0]
+        if not resolver.is_child(vocabulary, level, str(dto.value), parent_level, parent_code):
+            raise FeatureValidationError(
+                f"Value {dto.value} is not allowed for '{parent_code}' "
+                f"({vocabulary}/{parent_level})",
+                code=ValidationErrorCode.NOT_IN_OPTIONS,
+                ref_value=parent_code,
+            )
+
+    @staticmethod
+    def _parent_level(resolver: Any, vocabulary: str, level: str) -> Optional[str]:
+        info = resolver.describe(vocabulary)
+        if info is None:
+            return None
+        found = info.level(level)
+        return found.parent if found else None
 
     def dto_to_dao(self, config: IntConfig, dto: IntDto, feature: FeatureDef) -> IntDao:
         """Convert integer DTO to DAO with metadata."""

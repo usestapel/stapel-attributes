@@ -19,6 +19,7 @@ import pytest
 from stapel_attributes.base import FeatureDef
 from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.rules import parse_rules
+from stapel_attributes.types.int.config import IntConfig
 from stapel_attributes.types.ref_hierarchical_select.config import RefHierarchicalSelectConfig
 from stapel_attributes.types.ref_select.config import OptionsRef, RefSelectConfig
 
@@ -76,6 +77,7 @@ def test_root_points_at_the_feature_def_definition():
     ("OptionsRef", OptionsRef),
     ("RefSelectConfig", RefSelectConfig),
     ("RefHierarchicalSelectConfig", RefHierarchicalSelectConfig),
+    ("IntConfig", IntConfig),
 ])
 def test_ref_config_definitions_match_their_dataclasses(definition, dataclass):
     assert set(DEFS[definition]["properties"]) == {f.name for f in fields(dataclass)}

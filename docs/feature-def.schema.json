@@ -218,6 +218,26 @@
         "minDepth": {"type": "integer", "minimum": 1, "default": 1},
         "maxDepth": {"type": ["integer", "null"], "minimum": 1}
       }
+    },
+    "IntConfig": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"const": "int"},
+        "min": {"type": ["integer", "null"]},
+        "max": {"type": ["integer", "null"]},
+        "options": {"type": ["array", "null"], "items": {"type": "integer"}},
+        "allowCustom": {"type": "boolean", "default": true},
+        "prefix": {"type": ["string", "null"]},
+        "postfix": {"type": ["string", "null"]},
+        "postfix1000": {"type": ["string", "null"]},
+        "placeholder": {"type": ["string", "null"]},
+        "precision": {"type": "integer", "default": 1},
+        "optionsRef": {
+          "anyOf": [{"$ref": "#/$defs/OptionsRef"}, {"type": "null"}],
+          "description": "Vocabulary-backed allowed set: the value must be a term of `level` (its code is the value's decimal digits), and with `parentFeature` filled, a child of the selected parent term. The value stays an integer on the wire; `min`/`max` keep applying as coarse static bounds."
+        }
+      }
     }
   }
 }

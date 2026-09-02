@@ -4,6 +4,29 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.8.2] — 2026-09-02
+
+Patch (pre-1.0: minor = breaking, patch = compatible). One additive config
+key on `int`, enforced on both write paths.
+
+### Added
+
+- **`IntConfig.optionsRef`** — a vocabulary-backed allowed set for an integer
+  feature, the same `{vocabulary, level, parentFeature?}` pointer the
+  ref-types carry. The value must be a term of `level` (its code is the
+  value's decimal digits), and with `parentFeature` filled, a child of the
+  selected parent term (`validate_dto_in_context`, mirroring `ref_select`'s
+  soft path: an empty parent allows the whole level). The value stays an
+  `int` end to end — DTO, DAO, facets, sorting — only membership reads the
+  resolver. Exists for «год выпуска»: 72 174 car modifications each carry
+  their own year range, which cannot ride the rules grammar (a `limit` rule
+  per modification would put the catalogue into every schema payload), so
+  the constraint lives where the modification chain already lives — the
+  vocabulary — and both the composer's picker and the server's refusal read
+  the same edges. `docs/feature-def.schema.json` gains `$defs.IntConfig`
+  (gated against the dataclass), so the pair generates the TS shape from the
+  same canon.
+
 ## [0.8.1] — 2026-09-02
 
 Patch (pre-1.0: minor = breaking, patch = compatible). One new optional
