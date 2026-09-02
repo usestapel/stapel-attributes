@@ -4,6 +4,27 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.8.3] — 2026-09-03
+
+Patch (pre-1.0: minor = breaking, patch = compatible). The unknown-config-key
+warning learns the one class of key it was libelling.
+
+### Fixed
+
+- **`validation.ENGINE_CONFIG_KEYS`** — a named set of config keys every type
+  carries and no type's dataclass declares, excluded from the
+  `Unknown config key(s) ignored: …` warning. It holds one member today:
+  `facet`, the buyer-facet opt-out stapel-search's `_is_facetable` reads off
+  the raw config (defaulting to true when absent), which a category author
+  writes to say "the parcel's width is a shipping input, not a filter axis".
+  The warning's contract is "this key was dropped and does nothing", and the
+  correct response to it is to delete the key — so emitting it for `facet`
+  talked a reviewer into removing a working opt-out from every commerce field
+  in an imported catalogue. `facet` is deliberately still not a field on any
+  config dataclass: it is not an input to value validation, and adding it to
+  fourteen dataclasses would put `facet: true` into every resolved config in
+  the fleet. A typo *beside* an engine key is still warned about.
+
 ## [0.8.2] — 2026-09-02
 
 Patch (pre-1.0: minor = breaking, patch = compatible). One additive config

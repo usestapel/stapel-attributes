@@ -605,6 +605,27 @@ def validate_dto_structured(
     return ValidationBatchResult(valid=all_valid, results=results)
 
 
+#: Config keys every type carries and no type's dataclass declares.
+#:
+#: These are ENGINE-LEVEL statements about a feature — how the surrounding
+#: product treats it — not inputs to value validation, so they deliberately
+#: never enter the typed dataclass and are never `parse_config`'s business.
+#: They are also not dropped: the raw config is what a category stores and
+#: what `categories.features` serves, and the consumer reads them from there.
+#:
+#: - ``facet``: whether the category offers this feature as a buyer filter
+#:   axis (stapel-search's ``_is_facetable``, defaulting to TRUE when absent).
+#:   The parcel's weight is a shipping input, not a shopping axis, and the
+#:   very same ``int`` one category over is a filter — so no type could infer
+#:   it and no type's dataclass should own it.
+#:
+#: Listing them here keeps :func:`_unknown_config_keys` honest: its warning
+#: means "this key was dropped and does nothing", and a reviewer's correct
+#: response to it is to DELETE the key. Saying that about a key the fleet
+#: reads would talk a reviewer into removing a working opt-out.
+ENGINE_CONFIG_KEYS = frozenset({"facet"})
+
+
 def _unknown_config_keys(raw_config: Any, config_class: Any) -> List[str]:
     """Keys present in a raw config dict but not recognized by ``config_class``.
 
@@ -621,7 +642,7 @@ def _unknown_config_keys(raw_config: Any, config_class: Any) -> List[str]:
     """
     if not isinstance(raw_config, dict):
         return []
-    known = {f.name for f in fields(config_class)}
+    known = {f.name for f in fields(config_class)} | ENGINE_CONFIG_KEYS
     return sorted(k for k in raw_config if k not in known)
 
 

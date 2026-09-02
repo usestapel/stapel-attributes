@@ -357,6 +357,38 @@ class TestValidateConfigsStructured:
         result = validate_configs_structured(car_features)
         assert all(row.warnings is None for row in result.results)
 
+    def test_an_engine_level_key_is_not_dead_weight(self):
+        """`facet` is read off the RAW config, so calling it "ignored" lies.
+
+        The warning's whole contract is "your key was dropped, it does
+        nothing" — the reviewer's correct response to it is to delete the
+        key. `facet` is not dropped: it never enters the typed dataclass
+        (it is not a value-validation concern) but it survives storage and
+        `categories.features`, and stapel-search's facet plan reads it there
+        to keep a delivery weight out of the buyer's filter panel. Warning
+        about it would invite a reviewer to delete a working opt-out on
+        every commerce field in the catalogue.
+        """
+        for type_slug, extra in (("int", {"min": 0}),
+                                 ("string", {}),
+                                 ("bool", {}),
+                                 ("select", {"options": [{"value": "a", "label": "a"}]})):
+            configs = [FeatureDef(
+                slug="weight_for_delivery",
+                config={"type": type_slug, "facet": False, **extra},
+            )]
+            row = validate_configs_structured(configs).results[0]
+            assert row.status == ValidationStatus.OK, type_slug
+            assert row.warnings is None, (type_slug, row.warnings)
+
+    def test_a_typo_beside_an_engine_key_is_still_warned(self):
+        """The allowlist is a named set, not a hole in the check."""
+        configs = [FeatureDef(
+            slug="name", config={"type": "string", "facet": False, "minLenght": 5},
+        )]
+        row = validate_configs_structured(configs).results[0]
+        assert row.warnings == ["Unknown config key(s) ignored: minLenght"]
+
 
 class TestValidateDaoStructured:
     def test_valid_dao(self, car_features):
