@@ -283,6 +283,13 @@ def _cond_matches(cond: Cond, strings: Sequence[str]) -> bool:
         return bool(strings)
     if cond.op == 'empty':
         return not strings
+    # A VALUE predicate is false of a value that is not there. "The answer is
+    # not X" is not something you can say truthfully about a field nobody has
+    # answered, and saying it demanded a field whose stated precondition had
+    # not happened. `empty` / `filled` exist for the question about absence,
+    # and `any: [empty, not_in]` spells "unanswered, or not X" explicitly.
+    if not strings:
+        return False
     hit = any(s in cond.values for s in strings)
     return hit if cond.op == 'in' else not hit
 

@@ -259,6 +259,15 @@ known_slugs=...)` reports it as a non-blocking warning.
   (`False` -> `['false']` — a false bool is *filled*; a non-integral number ->
   its shortest decimal, never an exponent; a `{type, value}` DTO envelope is
   unwrapped). Both languages compare the same strings.
+- **A value predicate is false of a value that is not there.** `in` and
+  `not_in` are questions about the answer a person gave, so on an *unanswered*
+  controller both are `False` — you cannot truthfully say "the answer is not
+  X" about a field nobody answered, and saying it starred a field whose stated
+  precondition had not happened. Absence has its own two operators: write
+  `{op: empty}` for "not answered", and `when: {any: [{op: empty}, {op:
+  not_in, …}]}` for "not answered yet, **or** not X". `False`, `0` and `''`
+  are not absence — `stringify` decides that, and only `None`, `''`, `[]` and
+  an empty envelope read as empty.
 - **Rules reach types through the config, not through the types.**
   `narrow_config(config_dict, state)` drops forbidden options and replaces a
   *declared* `min`/`max`; the narrowed config then goes down the ordinary

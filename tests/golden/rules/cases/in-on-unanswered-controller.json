@@ -45,7 +45,7 @@
             "all": [
               {
                 "feature": "condition",
-                "op": "not_in",
+                "op": "in",
                 "values": [
                   "new"
                 ]
@@ -57,7 +57,7 @@
       "slug": "screen_state"
     }
   ],
-  "id": "require-when-not-in-empty-value",
-  "note": "an unanswered controller satisfies no value predicate: `not_in` does NOT fire while the field is blank (write `any: [empty, not_in]` for 'unanswered, or not X')",
+  "id": "in-on-unanswered-controller",
+  "note": "a value predicate is false of a value that is not there: `in` does not fire on an unanswered field",
   "values": {}
 }

@@ -4,6 +4,75 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.9.0] — 2026-09-03
+
+Minor (pre-1.0: minor = breaking, patch = compatible). **A value predicate is
+false of a value that is not there.**
+
+### Changed — BREAKING (rule semantics)
+
+- **`in` and `not_in` no longer match an unanswered controller.** A condition
+  whose controlling feature reads empty (`None`, `''`, `[]`, an envelope with a
+  null value, or a slug the feature set does not declare) is now `False` for
+  both value operators. `in` already behaved this way by accident — `any(...)`
+  over no strings is false — so the change lands on **`not_in` alone**, which
+  used to be *true* on a blank field and made every `require when X not_in […]`
+  rule fire before anyone had answered `X`.
+
+  Two independent UX walkers hit the same wall on a live catalogue: a field
+  starred and blocking the composer while its own help text said "required
+  **if** you said in field *Kit* that there is a box", with *Kit* untouched.
+  There is no honest way out of that screen — the seller either lies or stops.
+
+  The defence is short: `not_in` is a question about the answer a person gave,
+  and an unanswered field has no answer to compare. "The value is not X" cannot
+  be true where there is no value; treating absence as satisfying a value
+  comparison silently merges two different questions into one operator. The
+  closed grammar already carries the operators for the other question —
+  `{op: empty}` and `{op: filled}` — and the connective to combine them, so an
+  author who really means "not answered yet, **or** not X" writes it and gets
+  exactly that:
+
+  ```json
+  {"effect": "require",
+   "when": {"any": [{"feature": "condition", "op": "empty"},
+                    {"feature": "condition", "op": "not_in", "values": ["new"]}]}}
+  ```
+
+  Nothing about *emptiness* moved: `stringify` is unchanged, so `False` is
+  still filled (`['false']`) and `not_in ['true']` still fires on it, and
+  `empty`/`filled` answer exactly what they did before. The change is in the
+  condition, so it reaches every effect the same way — an unmatched rule leaves
+  `show` shut, `hide` open, `require` silent, `forbid_option` banning nothing
+  and `limit` narrowing nothing.
+
+  **Blast radius, measured on the live 3 642-category / 14 577-feature imported
+  catalogue** (not estimated): 4 093 conditions across 3 931 distinct rules —
+  `in` 4 020, `filled` 43, `empty` 27, **`not_in` 3**. Those three rules hang on
+  22 feature-rows in 2 leaves. Sweeping 498 903 value assignments over every
+  category changes 984 feature-state cells, all of them on those rows; on a
+  blank form 13 rows change (13 `visible` true→false, of which 7 were also
+  `required` true→false) — every one of them a "tell us about the defects"
+  field that used to be demanded before the seller had said whether the device
+  was new. **Zero features became unreachable and zero became newly reachable**;
+  no field lost or gained the ability to ever be required. The generated
+  imported corpus (3 890 distinct rules at both polarities, 7 780 frames,
+  15 730 recorded feature-state expectations) re-records **byte-identical** —
+  its polarity generator always answers the controller, so no imported rule was
+  relying on the empty match.
+
+### Added
+
+- Eleven golden cases in `tests/golden/rules/cases/` — both value operators on
+  an unanswered controller, `not_in` on each empty payload shape (missing key,
+  `''`, DTO envelope with a null value) and on a false bool, every effect's
+  own default under an unmatched condition, and `any: [empty, not_in]` as the
+  explicit spelling. attributes-react runs the same files, so the two
+  evaluators are measured equal on the new semantics rather than reviewed
+  equal. `require-when-not-in-empty-value` keeps its name and now records the
+  opposite verdict; its `note` used to read "`not_in` also fires when the
+  controller is empty" — the corpus had pinned the defect.
+
 ## [0.8.3] — 2026-09-03
 
 Patch (pre-1.0: minor = breaking, patch = compatible). The unknown-config-key

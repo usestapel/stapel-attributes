@@ -57,7 +57,9 @@
       "slug": "screen_state"
     }
   ],
-  "id": "require-when-not-in-empty-value",
-  "note": "an unanswered controller satisfies no value predicate: `not_in` does NOT fire while the field is blank (write `any: [empty, not_in]` for 'unanswered, or not X')",
-  "values": {}
+  "id": "not-in-on-empty-string-payload",
+  "note": "the empty string reads as unanswered, so `not_in` stays silent",
+  "values": {
+    "condition": ""
+  }
 }

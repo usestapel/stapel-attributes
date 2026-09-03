@@ -11,25 +11,14 @@
       "forbidden_options": [],
       "max": null,
       "min": null,
-      "required": false,
+      "required": true,
       "visible": true
     }
   },
   "features": [
     {
       "config": {
-        "maxSelected": 1,
-        "options": [
-          {
-            "label": "new",
-            "value": "new"
-          },
-          {
-            "label": "used",
-            "value": "used"
-          }
-        ],
-        "type": "select"
+        "type": "bool"
       },
       "slug": "condition"
     },
@@ -47,7 +36,7 @@
                 "feature": "condition",
                 "op": "not_in",
                 "values": [
-                  "new"
+                  "true"
                 ]
               }
             ]
@@ -57,7 +46,9 @@
       "slug": "screen_state"
     }
   ],
-  "id": "require-when-not-in-empty-value",
-  "note": "an unanswered controller satisfies no value predicate: `not_in` does NOT fire while the field is blank (write `any: [empty, not_in]` for 'unanswered, or not X')",
-  "values": {}
+  "id": "not-in-on-false-bool",
+  "note": "a false bool IS an answer (stringify -> ['false']), so `not_in ['true']` fires on it",
+  "values": {
+    "condition": false
+  }
 }

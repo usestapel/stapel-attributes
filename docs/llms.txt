@@ -1,4 +1,4 @@
-# stapel-attributes 0.8.3
+# stapel-attributes 0.9.0
 
 Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
@@ -76,7 +76,7 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   Convert an already-validated typed DTO into its typed DAO, threading through config-derived metadata (name/order/title/badge/translate) from the owning FeatureDef. Use this rather than hand-copying DTO fields into a storage dict — the metadata threading is the part that is easy to forget.
 - evaluate_rules — stapel_attributes.rules.evaluate_rules
   instead of: reading FeatureDef.mandatory as if it were the whole requiredness answer
-  The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half.
+  The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half. A value predicate (in/not_in) is FALSE on an unanswered controller — absence is asked with empty/filled, and 'unanswered, or not X' is a when.any of the two.
 - field_kind_for — stapel_attributes.profile_bridge.field_kind_for
   instead of: re-deriving the ProfileFieldKind -> FIELD_KINDS mapping per projection
   Map a stapel-profiles ProfileFieldKind value to the matching config_form.FIELD_KINDS key — the one lookup a shop/classified projection needs when it builds a filterable attribute FROM a profile field, so the mapping is defined once instead of re-derived (or duplicated) per projection.

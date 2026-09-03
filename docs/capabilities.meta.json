@@ -253,7 +253,7 @@
     },
     "evaluate_rules": {
       "kind": "factory",
-      "intent": "The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half.",
+      "intent": "The single-pass rule evaluator: feature defs + submitted values -> {slug: RuleState(visible, required, forbidden_options, min, max)}. Reach for this wherever you need to know whether a field is shown or required RIGHT NOW (a form gate, a publish check) instead of reading FeatureDef.mandatory, which only knows the static half. A value predicate (in/not_in) is FALSE on an unanswered controller \u2014 absence is asked with empty/filled, and 'unanswered, or not X' is a when.any of the two.",
       "instead_of": [
         "reading FeatureDef.mandatory as if it were the whole requiredness answer"
       ]

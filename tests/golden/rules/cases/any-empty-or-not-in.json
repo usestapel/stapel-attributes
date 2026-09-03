@@ -11,7 +11,7 @@
       "forbidden_options": [],
       "max": null,
       "min": null,
-      "required": false,
+      "required": true,
       "visible": true
     }
   },
@@ -42,7 +42,11 @@
         {
           "effect": "require",
           "when": {
-            "all": [
+            "any": [
+              {
+                "feature": "condition",
+                "op": "empty"
+              },
               {
                 "feature": "condition",
                 "op": "not_in",
@@ -57,7 +61,7 @@
       "slug": "screen_state"
     }
   ],
-  "id": "require-when-not-in-empty-value",
-  "note": "an unanswered controller satisfies no value predicate: `not_in` does NOT fire while the field is blank (write `any: [empty, not_in]` for 'unanswered, or not X')",
+  "id": "any-empty-or-not-in",
+  "note": "the explicit spelling of 'not answered yet, or not new' — what an author writes when they mean it",
   "values": {}
 }

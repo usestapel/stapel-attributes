@@ -191,3 +191,92 @@ class TestEvaluateRules:
         with pytest.raises(FeatureValidationError) as exc:
             evaluate_rules([feature], {})
         assert exc.value.error_code is ValidationErrorCode.INVALID_RULES
+
+
+class TestValuePredicatesOnAnUnansweredField:
+    """No value predicate holds of a value that is not there (§1.3).
+
+    ``in`` / ``not_in`` speak about the value a person gave; an unanswered
+    field has none, so both are False. The grammar carries ``empty`` /
+    ``filled`` for the question the author actually means when they want to
+    branch on the absence, and ``any: [empty, not_in]`` spells "not answered
+    yet, or not X" without ambiguity.
+    """
+
+    @staticmethod
+    def _pair(op, values=("new",)):
+        return [
+            {"slug": "controller", "config": {"type": "string"}},
+            {
+                "slug": "dependent",
+                "config": {"type": "string"},
+                "rules": [{
+                    "effect": "require",
+                    "when": {"all": [{"feature": "controller", "op": op, "values": list(values)}]},
+                }],
+            },
+        ]
+
+    @pytest.mark.parametrize("op", ["in", "not_in"])
+    @pytest.mark.parametrize("payload, why", [
+        ({}, "the slug was never submitted"),
+        ({"controller": None}, "explicit null"),
+        ({"controller": ""}, "the empty string"),
+        ({"controller": []}, "the empty list"),
+        ({"controller": {"type": "select", "value": None}}, "an empty DTO envelope"),
+    ])
+    def test_no_value_predicate_fires_on_an_empty_reading(self, op, payload, why):
+        state = evaluate_rules(self._pair(op), payload)
+        assert state["dependent"].required is False, why
+
+    def test_not_in_still_fires_on_an_answer_outside_the_list(self):
+        state = evaluate_rules(self._pair("not_in"), {"controller": "used"})
+        assert state["dependent"].required is True
+
+    def test_not_in_stays_silent_on_an_answer_inside_the_list(self):
+        state = evaluate_rules(self._pair("not_in"), {"controller": "new"})
+        assert state["dependent"].required is False
+
+    def test_false_is_an_answer_and_still_compares(self):
+        # `stringify(False) == ['false']`: a false bool is filled, so it is a
+        # value like any other and `not_in ['true']` holds of it.
+        state = evaluate_rules(self._pair("not_in", ("true",)), {"controller": False})
+        assert state["dependent"].required is True
+
+    def test_absence_is_spelled_with_empty(self):
+        features = self._pair("not_in")
+        features[1]["rules"][0]["when"] = {"any": [
+            {"feature": "controller", "op": "empty"},
+            {"feature": "controller", "op": "not_in", "values": ["new"]},
+        ]}
+        assert evaluate_rules(features, {})["dependent"].required is True
+        assert evaluate_rules(features, {"controller": "used"})["dependent"].required is True
+        assert evaluate_rules(features, {"controller": "new"})["dependent"].required is False
+
+    @pytest.mark.parametrize("effect, read, blank, answered", [
+        # An unanswered controller leaves the rule UNMATCHED, and each effect
+        # then reads its own default: a `show` gate stays shut, a `hide` gate
+        # stays open, a `require` does not demand.
+        ("show", lambda s: s.visible, False, True),
+        ("hide", lambda s: s.visible, True, False),
+        ("require", lambda s: s.required, False, True),
+    ])
+    def test_every_effect_reads_the_same_condition(self, effect, read, blank, answered):
+        features = self._pair("not_in")
+        features[1]["rules"][0]["effect"] = effect
+        assert read(evaluate_rules(features, {})["dependent"]) is blank
+        assert read(evaluate_rules(features, {"controller": "used"})["dependent"]) is answered
+
+    def test_forbid_option_no_longer_bans_on_an_unanswered_controller(self):
+        features = self._pair("not_in")
+        features[1]["rules"][0]["effect"] = "forbid_option"
+        features[1]["rules"][0]["option"] = "banned"
+        assert evaluate_rules(features, {})["dependent"].forbidden_options == frozenset()
+        assert evaluate_rules(features, {"controller": "used"})["dependent"].forbidden_options == {"banned"}
+
+    def test_limit_no_longer_narrows_on_an_unanswered_controller(self):
+        features = self._pair("not_in")
+        features[1]["rules"][0]["effect"] = "limit"
+        features[1]["rules"][0]["max"] = 5
+        assert evaluate_rules(features, {})["dependent"].max is None
+        assert evaluate_rules(features, {"controller": "used"})["dependent"].max == 5
