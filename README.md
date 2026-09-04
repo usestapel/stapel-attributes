@@ -24,7 +24,7 @@ pip install stapel-attributes
 
 | Fact | Value |
 |---|---|
-| Version | `0.9.0` |
+| Version | `0.9.1` |
 | Python | `>=3.11` (3.11, 3.12, 3.13, 3.14) |
 | Django | `djangorestframework>=3.14` |
 | Config axes | 1 |

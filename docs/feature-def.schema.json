@@ -170,7 +170,9 @@
         "optionsRef": {"$ref": "#/$defs/OptionsRef"},
         "minSelected": {"type": "integer", "minimum": 0, "default": 0},
         "maxSelected": {"type": ["integer", "null"], "minimum": 1, "default": 1},
-        "uiStyle": {"enum": ["dropdown", "chips"], "default": "dropdown"}
+        "uiStyle": {"enum": ["dropdown", "chips"], "default": "dropdown"},
+        "prefix": {"type": ["string", "null"], "description": "Display affix before the rendered labels; a translation key, snapshotted into the DAO at write time exactly as on `int`/`float`."},
+        "postfix": {"type": ["string", "null"], "description": "Display affix after the rendered labels — the unit a numeric vocabulary level needs, so a stored floor prints with it rather than as a bare `3`."}
       }
     },
 

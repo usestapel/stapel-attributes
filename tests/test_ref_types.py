@@ -7,7 +7,7 @@ from stapel_attributes import (
     parse_config,
     validate_feature_config,
 )
-from stapel_attributes.base import FeatureDef, ValidationContext
+from stapel_attributes.base import FeatureDef, ValidationContext, dataclass_to_dict_no_none
 from stapel_attributes.exceptions import FeatureValidationError
 from stapel_attributes.results import ValidationErrorCode, ValidationStatus
 from stapel_attributes.tests.fake_vocabulary import VOCABULARY, FakeVocabularyResolver
@@ -136,6 +136,28 @@ class TestRefSelectConfig:
             validate_feature_config(ref_config(**overrides))
         assert exc.value.error_code is code
 
+    def test_affixes_survive_the_config_round_trip(self, resolver):
+        # A numeric vocabulary level (floor: "3", "9") needs its unit.
+        raw = ref_config(prefix="from", postfix="fl.")
+        config = validate_feature_config(raw)
+        assert (config.prefix, config.postfix) == ("from", "fl.")
+        assert dataclass_to_dict_no_none(config)["postfix"] == "fl."
+
+    def test_affixes_are_optional_and_stay_absent(self, resolver):
+        config = validate_feature_config(ref_config())
+        assert config.prefix is None and config.postfix is None
+        emitted = dataclass_to_dict_no_none(config)
+        assert "prefix" not in emitted and "postfix" not in emitted
+
+    def test_affixes_are_not_an_unknown_key(self, resolver):
+        # The engine warns about config keys it drops; these are not dropped.
+        result = validate_configs_structured(
+            [FeatureDef(slug="floor", config=ref_config(postfix="fl."))]
+        )
+        assert result.valid
+        # No warnings at all: an absent list is how "nothing was dropped" reads.
+        assert result.results[0].warnings is None
+
 
 class TestRefSelectValue:
     def test_known_term_passes(self, resolver):
@@ -212,6 +234,36 @@ class TestRefSelectStorage:
     def test_translation_keys_are_vocabulary_owned(self, resolver):
         feature_type = get_feature_type("ref_select")
         assert feature_type.get_translation_keys(parse_config(ref_config())) == []
+
+    def test_the_affixes_are_the_only_translation_keys(self, resolver):
+        feature_type = get_feature_type("ref_select")
+        config = parse_config(ref_config(prefix="from", postfix="fl."))
+        assert feature_type.get_translation_keys(config) == ["from", "fl."]
+
+    def test_dao_carries_the_affixes_from_the_config(self, resolver):
+        feature = FeatureDef(
+            slug="floor", config=ref_config(level="Floor", postfix="fl."), name="Floor"
+        )
+        dao = normalize_to_dao([feature], {"floor": ["3"]})["floor"]
+        assert dao["value"] == ["3"]
+        assert dao["postfix"] == "fl."
+        assert "prefix" not in dao
+
+    def test_dao_omits_the_affixes_when_the_config_has_none(self, resolver):
+        feature = FeatureDef(slug="floor", config=ref_config(level="Floor"))
+        dao = normalize_to_dao([feature], {"floor": ["3"]})["floor"]
+        assert "postfix" not in dao and "prefix" not in dao
+
+    def test_format_value_wraps_the_labels_in_the_affixes(self, no_resolver):
+        dao_class = get_feature_type("ref_select").dao_class
+        dao = dao_class(value=["3"], labels=["3"], postfix="fl.")
+        config = ref_config(level="Floor", postfix="fl.")
+        assert format_feature_value(config, dao) == "3 fl."
+
+    def test_format_value_of_an_empty_selection_stays_empty(self, no_resolver):
+        dao_class = get_feature_type("ref_select").dao_class
+        config = ref_config(level="Floor", prefix="from", postfix="fl.")
+        assert format_feature_value(config, dao_class()) == ""
 
 
 class TestRefHierarchicalSelect:

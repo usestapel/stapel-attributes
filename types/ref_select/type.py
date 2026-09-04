@@ -32,11 +32,12 @@ class RefSelectFeatureType(BaseFeatureType[RefSelectConfig, RefSelectDto, RefSel
         - minSelected: minimum selections (default: 0)
         - maxSelected: maximum selections (default: 1; null = unlimited)
         - uiStyle: 'dropdown' or 'chips' (default: 'dropdown')
+        - prefix, postfix: display affixes, as on ``int``/``float``
 
     DTO value: list of term codes.
     DAO value: codes + a ``labels`` snapshot + the vocabulary/level they came
-    from, so display never re-reads the vocabulary and facets keep working on
-    the codes exactly as for ``select``.
+    from + the display affixes, so display never re-reads the vocabulary and
+    facets keep working on the codes exactly as for ``select``.
 
     Options are never inlined into the config — the vocabularies this exists
     for have thousands of terms per level.
@@ -218,6 +219,8 @@ class RefSelectFeatureType(BaseFeatureType[RefSelectConfig, RefSelectDto, RefSel
             labels=resolve_labels(get_vocabulary_resolver(), vocabulary, level, codes),
             vocabulary=vocabulary,
             level=level,
+            prefix=config.prefix,
+            postfix=config.postfix,
             name=feature.name,
             title=feature.show_at_title,
             badge=feature.show_as_badge,
@@ -259,8 +262,20 @@ class RefSelectFeatureType(BaseFeatureType[RefSelectConfig, RefSelectDto, RefSel
         """Format the stored value from the DAO labels (no resolver needed)."""
         codes = getattr(dao, 'value', None) or []
         labels = getattr(dao, 'labels', None) or []
-        return ', '.join(labels if len(labels) == len(codes) else codes)
+        formatted = ', '.join(labels if len(labels) == len(codes) else codes)
+        if not formatted:
+            return formatted
+        if config.prefix:
+            formatted = f"{config.prefix} {formatted}"
+        if config.postfix:
+            formatted = f"{formatted} {config.postfix}"
+        return formatted
 
     def get_translation_keys(self, config: RefSelectConfig) -> List[str]:
-        """None: term labels are owned by the vocabulary, not by this schema."""
-        return []
+        """Only the affixes: term labels are owned by the vocabulary."""
+        keys = []
+        if config.prefix:
+            keys.append(config.prefix)
+        if config.postfix:
+            keys.append(config.postfix)
+        return keys

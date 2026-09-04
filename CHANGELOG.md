@@ -4,6 +4,43 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.9.1] — 2026-09-04
+
+Patch (pre-1.0: minor = breaking, patch = compatible). Two additive config
+keys on `ref_select`, carried into the DAO the way `int` carries its own.
+
+### Added
+
+- **`RefSelectConfig.prefix` / `RefSelectConfig.postfix`** — the display
+  affixes `int` and `float` already carry, with the same semantics and the
+  same translation convention (they are translation keys; `get_translation_keys`
+  now returns them, and returns nothing else — term labels stay owned by the
+  vocabulary). `dto_to_dao` snapshots both into `RefSelectDao` at write time,
+  exactly as `int.dto_to_dao` does, so a renderer holding only the stored value
+  can print the unit without re-reading the config; `format_value` wraps the
+  resolved labels in them, and an empty selection still formats as `''` rather
+  than as a bare unit.
+
+  Found by a catalogue importer: `floor` / `floors` are vocabulary-backed
+  `ref_select` features whose terms are numbers (`"3"`, `"9"`). The importer
+  set `postfix` on them and the key went nowhere — `RefSelectConfig` had no
+  such field, so the unknown-key warning fired and `dto_to_dao`, which builds
+  its DAO explicitly, dropped it. A stored floor could only ever print as `3`.
+  A numeric vocabulary level needs its unit as much as an integer does, and
+  the unit is not a property of the vocabulary (the same `Floor` level is a
+  storey here and could be a shelf elsewhere), so it belongs on the config.
+
+  Both keys are optional and default to `None`: an existing config parses
+  unchanged, and a config without them emits no `prefix`/`postfix` into the
+  DAO. `docs/feature-def.schema.json` gains them on `$defs.RefSelectConfig`
+  (gated against the dataclass by `tests/test_feature_def_schema.py`), so
+  attributes-react regenerates the TS shape from the same canon.
+
+  No golden case: the cross-language corpus has two kinds, `config` (validity +
+  normalized config) and `dto` (validity + error code), and neither records a
+  DAO — the corpus format cannot express config→DAO carriage, so the carriage
+  is gated by `tests/test_ref_types.py` alone.
+
 ## [0.9.0] — 2026-09-03
 
 Minor (pre-1.0: minor = breaking, patch = compatible). **A value predicate is

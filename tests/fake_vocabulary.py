@@ -2,7 +2,9 @@
 
 Shape mirrors the real phone catalogue the ref-types were designed for:
 ``Vendor -> Model -> MemorySize``, three levels chained by ``parent``, with a
-handful of terms and edges so parent-narrowing has something to reject.
+handful of terms and edges so parent-narrowing has something to reject. A
+detached ``Floor`` level holds numeric codes — the shape that needs a unit
+printed after the label.
 """
 
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -15,12 +17,14 @@ LEVELS = (
     VocabularyLevel(name='Vendor'),
     VocabularyLevel(name='Model', parent='Vendor'),
     VocabularyLevel(name='MemorySize', parent='Model'),
+    VocabularyLevel(name='Floor'),
 )
 
 TERMS: Dict[str, Dict[str, str]] = {
     'Vendor': {'apple': 'Apple', 'samsung': 'Samsung'},
     'Model': {'iphone-15': 'iPhone 15', 'iphone-14': 'iPhone 14', 'galaxy-s24': 'Galaxy S24'},
     'MemorySize': {'128-gb': '128 GB', '256-gb': '256 GB'},
+    'Floor': {'3': '3', '9': '9'},
 }
 
 #: (parent_level, parent_code, child_level, child_code)
