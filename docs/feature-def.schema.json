@@ -69,6 +69,11 @@
           "enum": ["public", "owner", "staff"],
           "default": "public",
           "description": "Which audience may READ a stored value. Orthogonal to `mandatory`: a non-public feature is still required, still validated, still stored and still moderated — it is only never handed to a reader who is not entitled to it. Identifiers of a specific physical unit (VIN, IMEI, a serial or a registry number) belong here. `owner` = the object's owner, and staff; `staff` = staff only, not even the owner's own view. A non-public feature is never in a title, never a badge, never indexed and never facetable, and `show_at_title`/`show_as_badge` are forced to false."
+        },
+        "axis_role": {
+          "enum": ["make", "model", "generation", "year", "mileage", null],
+          "default": null,
+          "description": "Which classified AXIS this feature IS, when it is one — the manufacturer (`make`), the model it narrows to, the `generation`, the `year` of manufacture, the `mileage` — or null (the default) for the overwhelming majority of features, which are properties of an object rather than axes it is organised along. Decided by the catalogue and published with the schema so a consumer building a «more of this make» link or an AI descent asks 'which feature here is the make?' instead of keeping its own closed table of slugs (`brand` / `make` / `make_ref_select` / `vendor`), which a catalogue spelling the axis a fourth way drops out of silently. The vocabulary is closed: an unknown value is a typo, not a new axis, and is refused rather than passed through. At most one feature per role in one schema — two claiming `make` is a contradiction a reader cannot resolve, so both producer and consumer drop the role rather than pick a winner. Orthogonal to every other key: an axis feature is an ordinary feature of its own type, validated, stored, faceted and rendered exactly as it was before this field existed."
         }
       }
     },

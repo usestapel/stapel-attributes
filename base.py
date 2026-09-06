@@ -190,6 +190,14 @@ class FeatureDef:
             field; translation keys or literals.
         group: Form section this feature belongs to; section order is the
             order of first appearance. Never stored in a submitted value.
+        axis_role: Which classified AXIS this feature is — ``'make'``,
+            ``'model'``, ``'generation'``, ``'year'``, ``'mileage'`` — or
+            ``None`` (the default) for the overwhelming majority of features,
+            which are properties rather than axes. It is what lets a consumer
+            ask "which feature here is the make?" instead of keeping its own
+            closed table of slugs (``brand`` / ``make`` / ``make_ref_select``
+            / ``vendor``) that a catalogue spelling it a fourth way drops out
+            of silently. See :mod:`stapel_attributes.axis`.
     """
     slug: str
     config: Union[Dict[str, Any], Any]
@@ -206,10 +214,17 @@ class FeatureDef:
     hints: List[Dict[str, str]] = dataclass_field(default_factory=list)
     group: Optional[str] = None
     visibility: str = 'public'
+    axis_role: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.name is None:
             self.name = self.slug
+        # Raises UnknownAxisRole on a typo, for the same reason visibility
+        # does: a role nobody switches on downstream is indistinguishable
+        # from a feature that claims no axis at all.
+        from stapel_attributes.axis import normalize_axis_role
+
+        self.axis_role = normalize_axis_role(self.axis_role)
         # Raises UnknownVisibility on a typo — a definition that meant to hide
         # a VIN and misspelled the level must fail at the door, not publish it.
         from stapel_attributes.visibility import PUBLIC, normalize_visibility

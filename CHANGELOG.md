@@ -4,6 +4,56 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.9.2] — 2026-09-06
+
+Patch (pre-1.0: minor = breaking, patch = compatible). One optional field on
+`FeatureDef`, so a consumer can stop guessing which feature is the make.
+
+### Added
+
+- **`FeatureDef.axis_role`** — which classified AXIS a feature IS, when it is
+  one: `make`, `model`, `generation`, `year`, `mileage`, or `None` (the
+  default, and what every definition written before this says). A closed
+  vocabulary, a new module `stapel_attributes.axis`, and three functions —
+  `normalize_axis_role`, `axis_role_of`, `by_axis_role`.
+
+  Found by a storefront. «Найти больше вариантов этой марки» needs the MAKE
+  feature of the leaf a listing sits in, and an AI descent has to fill make
+  before model before generation because each narrows the next
+  (`optionsRef.parentFeature`). Nothing on a feature definition said which
+  feature that was, so the storefront kept its own closed table of slugs —
+  `{brand, make, make_ref_select, vendor}` — and a catalogue spelling the
+  axis a fourth way (`manufacturer`, `god_vypuska`) simply fell out of the
+  feature: no link, no descent, no error, nothing red anywhere. A table of
+  slugs maintained downstream of the catalogue is always one catalogue
+  behind, and the catalogue is the only party that knows the answer.
+
+  So the axis is a property of the DEFINITION, decided once and published
+  with the schema. `by_axis_role(defs)` is the lookup that replaces the
+  table: given a leaf's schema, which feature is the make.
+
+  The vocabulary is closed and an unknown value RAISES (`UnknownAxisRole`)
+  rather than passing through, for the reason `visibility` raises on a typo:
+  a role nobody downstream switches on is indistinguishable from a feature
+  that claims no axis at all, which is the very failure this field exists to
+  end. Blank and absent both normalize to `None`, so nothing that omits the
+  key changes shape.
+
+  At most one feature per role in one schema: two features claiming `make` is
+  a contradiction a reader cannot resolve, and a link built off the wrong one
+  sends a buyer to a facet they did not click. `by_axis_role` therefore DROPS
+  such a role rather than picking a winner; stapel-categories' derivation
+  refuses one step earlier, on the producer side, and says so.
+
+  Orthogonal to everything else on the definition. An axis feature is an
+  ordinary feature of its own type — validated, normalized, stored, faceted
+  and rendered exactly as before; nothing is stamped into a DAO, so the
+  stored-value shape, the search facets and the listings card contract are
+  untouched. `docs/feature-def.schema.json` gains it on `$defs.FeatureDef`
+  (gated against the dataclass by `tests/test_feature_def_schema.py`), so
+  attributes-react regenerates the TS shape from the same canon and
+  stapel-categories' `ResolvedFeature` gate requires it to cross the boundary.
+
 ## [0.9.1] — 2026-09-04
 
 Patch (pre-1.0: minor = breaking, patch = compatible). Two additive config

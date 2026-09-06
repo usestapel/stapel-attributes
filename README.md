@@ -24,11 +24,11 @@ pip install stapel-attributes
 
 | Fact | Value |
 |---|---|
-| Version | `0.9.1` |
+| Version | `0.9.2` |
 | Python | `>=3.11` (3.11, 3.12, 3.13, 3.14) |
 | Django | `djangorestframework>=3.14` |
 | Config axes | 1 |
-| Usage surface | 56 |
+| Usage surface | 59 |
 | Extension points | 5 |
 | Fleet dependencies | [`stapel-core`](https://github.com/usestapel/stapel-core) |
 

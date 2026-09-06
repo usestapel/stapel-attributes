@@ -44,6 +44,10 @@
     {
       "select": "functions",
       "path": "guard.py"
+    },
+    {
+      "select": "functions",
+      "path": "axis.py"
     }
   ],
   "surface": {
@@ -376,6 +380,27 @@
       "intent": "The (file, line, source) hits behind assert_raw_access_confined, for a report rather than an assertion.",
       "instead_of": [
         "re-implementing the scan"
+      ]
+    },
+    "normalize_axis_role": {
+      "kind": "gate_function",
+      "intent": "Coerce a FeatureDef.axis_role to 'make'|'model'|'generation'|'year'|'mileage', defaulting blank to None and RAISING on an unknown value — the closed vocabulary of classified axes a feature can BE (as opposed to describe).",
+      "instead_of": [
+        "accepting whatever a catalogue writes, where a typo reads as 'this feature is no axis at all'"
+      ]
+    },
+    "axis_role_of": {
+      "kind": "factory",
+      "intent": "Read the axis role off one feature definition, dict (comm payload) or dataclass alike, with the None default applied.",
+      "instead_of": [
+        "definition.get('axis_role') in one place and getattr in another"
+      ]
+    },
+    "by_axis_role": {
+      "kind": "factory",
+      "intent": "Given a category's feature definitions, the {role: definition} lookup that answers 'which feature here is the make/model/generation/year/mileage' — for a «more of this make» link, a facet URL or an AI descent that must fill make before model. A role two features claim is DROPPED rather than guessed at.",
+      "instead_of": [
+        "a closed table of slugs ({brand, make, make_ref_select, vendor}) kept downstream of the catalogue, which a fourth spelling drops out of silently"
       ]
     }
   }

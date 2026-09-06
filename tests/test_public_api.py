@@ -95,6 +95,17 @@ class TestLazyExports:
             "public_slugs",
             "redact_dao",
             "redact_daos",
+            # Axis roles (which classified axis a feature IS)
+            "AXIS_ROLES",
+            "GENERATION",
+            "MAKE",
+            "MILEAGE",
+            "MODEL",
+            "UnknownAxisRole",
+            "YEAR",
+            "axis_role_of",
+            "by_axis_role",
+            "normalize_axis_role",
             # Source-level gate against the next projection path that leaks
             "assert_raw_access_confined",
             "find_raw_access",

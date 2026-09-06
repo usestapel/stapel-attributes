@@ -1,8 +1,8 @@
-# stapel-attributes 0.9.1
+# stapel-attributes 0.9.2
 
 Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
-Contract: axes 1 · surface 56 · extension points 5.
+Contract: axes 1 · surface 59 · extension points 5.
 Generated from docs/capabilities.json by `stapel-llms-txt` — do not edit; drift-gated by `make contract-check`.
 
 ## Configuration axes — what a product switches on
@@ -19,6 +19,9 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
 - normalize_audience — stapel_attributes.visibility.normalize_audience
   instead of: trusting a role string from a request, where a forgotten viewer means full disclosure
   Coerce a viewer role to 'anonymous'|'owner'|'staff', failing CLOSED — unknown or missing is anonymous.
+- normalize_axis_role — stapel_attributes.axis.normalize_axis_role
+  instead of: accepting whatever a catalogue writes, where a typo reads as 'this feature is no axis at all'
+  Coerce a FeatureDef.axis_role to 'make'|'model'|'generation'|'year'|'mileage', defaulting blank to None and RAISING on an unknown value — the closed vocabulary of classified axes a feature can BE (as opposed to describe).
 - normalize_visibility — stapel_attributes.visibility.normalize_visibility
   instead of: your own string comparison, which downgrades a typo like 'private' to public and publishes a VIN
   Coerce a FeatureDef.visibility to 'public'|'owner'|'staff', defaulting blank to 'public' and RAISING on an unknown value.
@@ -55,8 +58,14 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
   instead of: hand-written role checks scattered across serializers
   Whether a value of the given visibility may be read by the given audience ('staff' outranks 'owner' on both sides).
 ### factory
+- axis_role_of — stapel_attributes.axis.axis_role_of
+  instead of: definition.get('axis_role') in one place and getattr in another
+  Read the axis role off one feature definition, dict (comm payload) or dataclass alike, with the None default applied.
 - build_feature_lookup — stapel_attributes.validation.build_feature_lookup
   Build the {slug-or-id: FeatureDef} lookup dict plus the ordered feature list in one call — the shared first step of every validate_*/normalize_to_dao entry point; use it instead of writing your own indexing loop over a configs iterable.
+- by_axis_role — stapel_attributes.axis.by_axis_role
+  instead of: a closed table of slugs ({brand, make, make_ref_select, vendor}) kept downstream of the catalogue, which a fourth spelling drops out of silently
+  Given a category's feature definitions, the {role: definition} lookup that answers 'which feature here is the make/model/generation/year/mileage' — for a «more of this make» link, a facet URL or an AI descent that must fill make before model. A role two features claim is DROPPED rather than guessed at.
 - coerce_feature_defs — stapel_attributes.validation.coerce_feature_defs
   instead of: ad hoc per-call normalization of dict-vs-list-vs-mapping feature-def input
   Normalize the three accepted 'configs' shapes (FeatureDef iterable, feature-def-dict iterable, or a {slug: ...} mapping) into one canonical List[FeatureDef], order-preserving. Every entry point into the validation pipeline takes this shape — call this first instead of writing your own dict/list normalization for whatever shape your caller happens to hand you.
