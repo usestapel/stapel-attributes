@@ -405,6 +405,16 @@ of feature-def dicts (`{"slug", "config", "mandatory", ...}`), or a mapping
 Error codes surface as `ValidationErrorCode` + `ref_value` + a localizable
 `error.400.feature_*` key (`errors.ERROR_CODE_TO_KEY`).
 
+All thirteen keys ship translated in `translations/errors.{ru,es}.json`. This
+library has no Django app, so a host never lists it in INSTALLED_APPS; the
+catalogs are found through the error registry instead — `catalog_search_dirs()`
+walks the package directory of every registered error owner (stapel-core
+>= 0.60.8), which is why that is the declared floor. A host overrides any text
+without a fork by shipping the same key in its own app's
+`translations/errors.<lang>.json`: `load_app_catalogs` merges later-wins and
+the host app is last. `tests/test_error_i18n.py` is the parity gate — a new
+`error.*` key with no ru/es text fails it.
+
 #### Unknown config keys — silently dropped, warned (not rejected)
 
 `parse_config` builds each type's typed config dataclass through a DRF

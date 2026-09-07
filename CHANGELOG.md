@@ -4,6 +4,50 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.9.3] — 2026-09-07
+
+Patch (pre-1.0: minor = breaking, patch = compatible). No API change; the
+`stapel-core` floor moves to the version that can find what this release ships.
+
+**The registry shipped without its catalogs.** `errors.py` has registered
+`error.*` keys since 0.1.0 — thirteen of them now — and no
+`translations/errors.<lang>.json` ever sat beside them. This library has no Django app — a host never lists it in
+INSTALLED_APPS, it enters the deployment's error canon purely by import — so
+until stapel-core 0.60.8 there was no way for the loader to reach a catalog it
+shipped, and no reason to ship one. 0.60.8 walks the package directory of
+every registered error owner. A fleet that installs this library pip-only
+found the gap the other way round: the discovery was fixed, the wheel still
+carried nothing, and "Mandatory feature {feature} is required" rendered in
+English on an otherwise Russian deployment.
+
+### Added
+
+- **`translations/errors.ru.json` and `translations/errors.es.json`** carry all
+  thirteen owned keys. The wording is authored here, not seeded: the
+  stapel-translate builtin corpus carries no `feature_*` key, and a module owns
+  the strings for the keys it registers. Register and placeholder conventions
+  follow the corpus's `error.400.field.*` family (`«{feature}»` in ru, bare
+  `{feature}` in es) and the neighbouring libraries' catalogs; `«характеристика»`
+  is the term this module's own admin locale already uses for a feature. Every
+  `{feature}` / `{min_length}` / `{max_length}` slot is preserved verbatim.
+  Packaged in the wheel — `translations/*.json` joins the package-data list,
+  which is the half both neighbouring libraries had to fix explicitly.
+- **`tests/test_error_i18n.py`** — the parity gate, so the next key cannot ship
+  untranslated. Per shipped language: every owned key present and non-empty,
+  nothing but owned keys carried, every text keeping the canon's placeholders,
+  the file byte-stable in the `dump_catalog` format; and once overall: the
+  shipped catalog set equals the gated set, `package-data` carries
+  `translations/*.json`, the loader's owned-key set equals the registry, and
+  this package's directory is in `catalog_search_dirs()` — the discovery path
+  that has no INSTALLED_APPS entry to fall back on, asserted rather than
+  assumed.
+
+### Changed
+
+- **`stapel-core>=0.60.8`** (was `>=0.10`) — the floor moves with the behaviour
+  this module reads. Below 0.60.8 the catalogs above are inert: catalog
+  discovery walked INSTALLED_APPS, which this app-less library is never in.
+
 ## [0.9.2] — 2026-09-06
 
 Patch (pre-1.0: minor = breaking, patch = compatible). One optional field on

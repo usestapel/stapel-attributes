@@ -1,0 +1,15 @@
+{
+  "error.400.description_too_long": "La descripción debe tener como máximo {max_length} caracteres",
+  "error.400.description_too_short": "La descripción debe tener al menos {min_length} caracteres",
+  "error.400.feature_above_maximum": "El valor de {feature} es superior al máximo permitido",
+  "error.400.feature_below_minimum": "El valor de {feature} es inferior al mínimo permitido",
+  "error.400.feature_invalid_config": "Configuración no válida para {feature}",
+  "error.400.feature_invalid_format": "Formato no válido para {feature}",
+  "error.400.feature_invalid_rules": "Reglas no válidas para {feature}",
+  "error.400.feature_invalid_type": "Tipo de valor no válido para {feature}",
+  "error.400.feature_mandatory_missing": "La característica {feature} es obligatoria",
+  "error.400.feature_not_allowed": "La característica {feature} no está permitida aquí",
+  "error.400.feature_not_in_options": "El valor de {feature} no es una opción permitida",
+  "error.400.feature_unknown": "Característica desconocida: {feature}",
+  "error.400.feature_unknown_type": "Tipo de característica desconocido para {feature}"
+}

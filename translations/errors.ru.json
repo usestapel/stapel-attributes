@@ -1,0 +1,15 @@
+{
+  "error.400.description_too_long": "Описание должно содержать не более {max_length} символов",
+  "error.400.description_too_short": "Описание должно содержать не менее {min_length} символов",
+  "error.400.feature_above_maximum": "Значение характеристики «{feature}» больше максимально допустимого",
+  "error.400.feature_below_minimum": "Значение характеристики «{feature}» меньше минимально допустимого",
+  "error.400.feature_invalid_config": "Некорректная конфигурация характеристики «{feature}»",
+  "error.400.feature_invalid_format": "Недопустимый формат значения характеристики «{feature}»",
+  "error.400.feature_invalid_rules": "Некорректные правила для характеристики «{feature}»",
+  "error.400.feature_invalid_type": "Недопустимый тип значения характеристики «{feature}»",
+  "error.400.feature_mandatory_missing": "Характеристика «{feature}» обязательна",
+  "error.400.feature_not_allowed": "Характеристика «{feature}» здесь недопустима",
+  "error.400.feature_not_in_options": "Значение характеристики «{feature}» не входит в список допустимых",
+  "error.400.feature_unknown": "Неизвестная характеристика «{feature}»",
+  "error.400.feature_unknown_type": "Неизвестный тип характеристики «{feature}»"
+}
