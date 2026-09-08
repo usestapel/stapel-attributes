@@ -4,6 +4,67 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.9.4] — 2026-09-08
+
+Patch (pre-1.0: minor = breaking, patch = compatible). No API change, no
+dependency change, no behaviour change: one artifact that did not exist starts
+being emitted, and the gates that keep it honest.
+
+**The registry had catalogues and no declaration.** 0.9.3 shipped
+`translations/errors.{ru,es}.json`, but nothing in this repo said WHICH codes
+those files were supposed to cover. Every one of the twenty-six sibling
+libraries emits `docs/errors.json` — the machine artifact that declares each
+`error.<status>.<slug>` key with its status, `{param}` slots, remediation,
+English text and owning package — and this one did not, because it has no
+Django app for `autodiscover_modules('errors')` to walk and therefore no
+harness. A consumer that wanted the list had to read it out of a HOST's
+artifact, where these thirteen keys appear as borrowed entries, or hand-author
+it. `@stapel/attributes-react` hand-authored it, which is how thirteen strings
+came to have two sources.
+
+### Added
+
+- **`docs/errors.json`** — 55 keys: the 13 this library owns plus the 42
+  cross-cutting ones stapel-core seeds into every registry. Emitted by the
+  shared `generate_error_keys` path (`stapel_tools.codegen.emit_errors`), not
+  written by hand; the entries for all 55 are byte-identical to the ones the
+  same generator already produces in stapel-listings' and stapel-categories'
+  artifacts. Packaged in the wheel (`docs/errors.json` was already in the
+  package-data list, waiting for a file to exist).
+- **`_codegen.py` + `_codegen_settings.py`** — the emission harness. The one
+  thing it does that a pair-backend's does not: this library cannot be in
+  `INSTALLED_APPS`, so autodiscovery can never reach its `errors` module, and
+  the harness names it in `STAPEL_ERROR_MODULES` — core's declared seam for an
+  error owner outside the app registry. That is what makes the artifact
+  deterministic rather than a side effect of whichever serializer a process
+  imported first. Unlike the pair-backends' harnesses it is NOT pinned to a
+  Python minor: the registry is rendered from the registry, not by
+  drf-spectacular, so it is byte-identical on 3.11 through 3.14 — which is what
+  lets the drift gate run across the whole test matrix instead of only in the
+  release loop.
+- **`make contract` / `make contract-check`** emit and diff it, before
+  `llms_txt` and `readme`, both of which read it. `docs/llms.txt` gains the
+  55-key error table (734 tokens, hence `--budget` 6400 → 7000) and README.md
+  gains its `Error codes | 55` row.
+- **Four gates in `tests/test_contract.py`**: every key `errors.py` registers is
+  declared with `owner: stapel_attributes` and the same English text; the
+  artifact declares no owner but this library and core (a third one would mean
+  the harness grew an undeclared dependency, and would put a sibling's keys
+  into the pair's bundles under this library's name); the shipped ru/es
+  catalogues cover exactly the owned keys and nothing else — the direction
+  `check_registry_catalog_pairing` does not check, where a translated key the
+  artifact does not declare is a string no consumer can reach; and the
+  re-emit-and-diff drift gate, run in a subprocess because Django settings are
+  process-global and this suite's own instance deliberately installs no stapel
+  app.
+
+### Why it matters downstream
+
+`@stapel/attributes-react` can now run `pnpm gen:errors` against this artifact
+the way every other pair does, and the thirteen ru/es lines it authored are
+deleted in the same wave: one refusal, one sentence, one source, with a drift
+gate that goes red when this library changes a wording.
+
 ## [0.9.3] — 2026-09-07
 
 Patch (pre-1.0: minor = breaking, patch = compatible). No API change; the

@@ -1,4 +1,14 @@
-# stapel-attributes — docs/llms.txt emission + drift gate (contract-pipeline.md §2-3).
+# stapel-attributes — contract emission + drift gate (contract-pipeline.md §2-3).
+#
+# FIRST, docs/errors.json — the error-key registry, emitted by the same
+# `generate_error_keys` path every sibling library uses (stapel_tools.codegen's
+# emit_errors, driven here by _codegen.py / _codegen_settings.py). This library
+# has no Django app, so `autodiscover_modules('errors')` can never reach its
+# errors module; the harness names it in `STAPEL_ERROR_MODULES`, core's seam for
+# exactly that, which is what makes the artifact deterministic instead of a side
+# effect of import order. 55 keys: the 13 this library owns plus the 42
+# cross-cutting ones core seeds into every registry — the same shape as all 26
+# siblings, and byte-identical to their entries for the shared codes.
 #
 # docs/capabilities.json here is otherwise HAND-WRITTEN (authored in the
 # stapel-catalog sweep, commit 9fce193 "docs: author capabilities.json for the
@@ -20,11 +30,13 @@ PYTHON ?= python3
 # Patch `surface` (+ module/version) into docs/capabilities.json, then emit
 # docs/llms.txt from the result.
 #
-# --budget 6400: the 56-entry surface (this L1 library IS almost entirely
+# --budget 7000: the 59-entry surface (this L1 library IS almost entirely
 # surface — see docs/capabilities.meta.json's _comment) runs over the
 # generator's default 4000-token ceiling; 0.5.0's rules + vocabulary seams
 # added seven more entries, and 0.8.0's visibility axis + source-level guard
-# added twelve. The owner's call, taken three times now: raise the ceiling, do
+# added twelve. 6400 -> 7000 is the errors section: docs/errors.json exists as
+# of 0.9.4, so llms.txt now carries the 55-key error table (734 tokens) it had
+# no artifact to render before. The owner's call, taken four times now: raise the ceiling, do
 # NOT shorten intent/instead_of lines to fit — a trimmed-to-fit context file
 # reads exactly like a complete one, which is the failure mode the hard-budget
 # gate exists to prevent (see stapel-auth/Makefile for the same pattern at a
@@ -40,16 +52,30 @@ PYTHON ?= python3
 # (HTTP operations, error codes, documented flows) are legitimately absent
 # for this L1 library — the generator omits zero-valued rows rather than
 # printing 0.
+#
+# errors.json is emitted BEFORE llms.txt and README.md, both of which read it:
+# the error-key table in the context file and the error-code count in the badge
+# row come from the artifact, so emitting it second would ship a context file
+# describing the registry as it was one release ago.
 contract:
+	$(PYTHON) -m stapel_attributes._codegen --out docs
 	$(PYTHON) -m stapel_tools.surface . --patch
-	$(PYTHON) -m stapel_tools.llms_txt . --budget 6400
+	$(PYTHON) -m stapel_tools.llms_txt . --budget 7000
 	$(PYTHON) -m stapel_tools.readme .
 
 # Drift gate: regenerate into a temp dir and diff against the committed docs/*.
 contract-check:
+	@tmp=$$(mktemp -d); \
+	$(PYTHON) -m stapel_attributes._codegen --out "$$tmp" || { rm -rf "$$tmp"; exit 1; }; \
+	if ! diff -q docs/errors.json "$$tmp/errors.json" >/dev/null 2>&1; then \
+		echo "DRIFT: docs/errors.json is stale — run 'make contract' and commit it"; \
+		diff docs/errors.json "$$tmp/errors.json" | head -20; \
+		rm -rf "$$tmp"; exit 1; \
+	fi; \
+	rm -rf "$$tmp"
 	$(PYTHON) -m stapel_tools.surface . --patch --check
 	@tmp=$$(mktemp -d); \
-	$(PYTHON) -m stapel_tools.llms_txt . --out "$$tmp" --budget 6400 || { rm -rf "$$tmp"; exit 1; }; \
+	$(PYTHON) -m stapel_tools.llms_txt . --out "$$tmp" --budget 7000 || { rm -rf "$$tmp"; exit 1; }; \
 	if ! diff -q docs/llms.txt "$$tmp/llms.txt" >/dev/null 2>&1; then \
 		echo "DRIFT: docs/llms.txt is stale — run 'make contract' and commit it"; \
 		diff docs/llms.txt "$$tmp/llms.txt" | head -20; \
@@ -57,4 +83,4 @@ contract-check:
 	fi; \
 	rm -rf "$$tmp"; \
 	$(PYTHON) -m stapel_tools.readme . --check || exit 1; \
-	echo "contract-check: docs/llms.txt + README.md up to date"
+	echo "contract-check: docs/errors.json + docs/llms.txt + README.md up to date"
