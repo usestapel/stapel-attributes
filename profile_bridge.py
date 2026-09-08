@@ -7,7 +7,7 @@ profile field's shape as a `stapel_profiles.field_defs.ProfileFieldKind`
 Django-model-field-shaped, not admin-config-form-shaped. When a shop/
 classified projection (docs/pending/projections-and-composition.md) builds a
 filterable/convertible attribute FROM a profile field (e.g. category
-"Services" wants a filter on ironmemo's ``occupation``), it needs a
+"Services" wants a filter on a client's ``occupation``), it needs a
 :data:`stapel_attributes.config_form.FIELD_KINDS` entry to render that
 attribute's admin config form — this module is the one small lookup table
 that answers "which FIELD_KINDS key matches this ProfileFieldKind", so the
