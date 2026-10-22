@@ -4,6 +4,18 @@ All notable changes to stapel-attributes are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0 semver: **minor = breaking**, patch = compatible.
 
+## [0.9.5] — 2026-10-22
+
+Patch. New helper, no behaviour change.
+
+`stapel_attributes.openapi.enum_name_overrides()` names each feature type's
+one-value `type` discriminator after its slug (`SelectTypeEnum`,
+`RefHierarchicalSelectTypeEnum`, …) for `ENUM_NAME_OVERRIDES`. Without it a
+schema holding several types gets drf-spectacular's collision names
+(`TypeE3eEnum`), which change with the type set, with any other `type` field
+and with the generator version — renaming a generated client's types under an
+unrelated edit. Read from the registry, so host-registered types are named too.
+
 ## [0.9.4] — 2026-09-08
 
 Patch (pre-1.0: minor = breaking, patch = compatible). No API change, no

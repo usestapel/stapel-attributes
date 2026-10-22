@@ -453,6 +453,14 @@ config-authoring path (category/attribute-schema editing).
 registry changes. Views in consuming modules should call the factory at
 request/schema time, never cache the class at import.
 
+### OpenAPI enum names (`openapi.py`)
+
+`enum_name_overrides()` → `{"SelectTypeEnum": ["select"], …}` for every registered type's
+`type` discriminator. A library that embeds feature types in its schema merges it into
+`spectacular_settings.ENUM_NAME_OVERRIDES` in its contract harness, so the generated client
+gets stable names instead of drf-spectacular's collision names (`TypeE3eEnum`); the fleet
+lint is `stapel-schema-lint` SCH004.
+
 ## Admin UI — schema-driven config editor (Lit 3)
 
 Python is the source of truth for each type's admin form. A type declares its
