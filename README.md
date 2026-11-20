@@ -30,7 +30,7 @@ pip install stapel-attributes
 | Config axes | 1 |
 | Usage surface | 59 |
 | Extension points | 5 |
-| Error codes | 55 |
+| Error codes | 56 |
 | Fleet dependencies | [`stapel-core`](https://github.com/usestapel/stapel-core) |
 
 ## Documentation

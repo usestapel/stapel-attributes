@@ -2,7 +2,7 @@
 
 Typed attributes engine: an L1 library (no models, migrations, views, urls, comm surface or service identity of its own) providing a polymorphic type-plugin system (config/dto/dao/type per feature type) behind an open registry, thirteen built-in types (two of them vocabulary-backed, one composite), a closed conditional-rule grammar shared with the TypeScript evaluator, DTO/DAO validation and normalization, polymorphic DRF serializers with OpenAPI schemas, and a schema-driven (Lit 3) admin config editor. Imported directly by stapel-categories (feature schema) and stapel-listings (value validation).
 
-Contract: axes 1 · surface 59 · extension points 5 · error codes 55.
+Contract: axes 1 · surface 59 · extension points 5 · error codes 56.
 Generated from docs/capabilities.json by `stapel-llms-txt` — do not edit; drift-gated by `make contract-check`.
 
 ## Configuration axes — what a product switches on
@@ -187,7 +187,7 @@ This is the answer to "does Stapel already have something for X?". `instead of` 
 ## Fits with — fleet dependencies
 - stapel-core (required) — AppSettings config layer, error registry — the only stapel-* dependency (pyproject.toml dependency; conf.py:8, errors.py:9)
 
-## Error codes (55) — the StapelError envelope
+## Error codes (56) — the StapelError envelope
 Render `t(code, params)`; branch UX on the remediation. Localized text lives in docs/errors.<lang>.md, not here.
 - error.400.bad_request [400] fix_input
 - error.400.captcha_invalid [400] retry
@@ -218,6 +218,7 @@ Render `t(code, params)`; branch UX on the remediation. Localized text lives in 
 - error.400.field.required [400] fix_input {field}
 - error.400.field.unique [400] fix_input {field}
 - error.400.invalid_ad_id [400] fix_input
+- error.400.too_many_ids [400] fix_input {requested,limit}
 - error.400.validation_error [400] fix_input
 - error.400.verification_failed [400] verify
 - error.400.verification_invalid_factor [400] verify
@@ -240,7 +241,7 @@ Render `t(code, params)`; branch UX on the remediation. Localized text lives in 
 - error.422.unprocessable_entity [422] wait_and_retry
 - error.423.locked [423] wait_and_retry
 - error.423.verification_locked [423] wait_and_retry
-- error.429.rate_limit [429] wait_and_retry {retry_after_minutes}
+- error.429.rate_limit [429] wait_and_retry {retry_after_display,retry_after,retry_after_minutes}
 - error.429.too_many_requests [429] wait_and_retry
 - error.500.internal [500] contact_support
 - error.503.mandate_unavailable [503] retry
